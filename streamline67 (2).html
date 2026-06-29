@@ -1,0 +1,2607 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StreamLine — Your Stream Assistant</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#F5F0E8;--sidebar-bg:#FDFAF5;--chat-bg:#F0EBE0;--card-bg:#FFFFFF;
+  --brown:#3D2B1F;--brown2:#6B4A35;--brown3:#9B7355;--brown-light:#C4A882;
+  --cream:#E8E0D0;--cream2:#D4C9B5;--green:#4A7C59;--red:#C0392B;--amber:#D4860A;
+  --border:#E0D5C5;--border2:#C8BBA8;--text:#2C1A0E;--text2:#6B5A4A;--text3:#9B8A7A;
+  --font:'Inter',sans-serif;--radius:16px;
+}
+html,body{height:100%;overflow:hidden}
+body{background:var(--bg);color:var(--text);font-family:var(--font);display:flex;flex-direction:column}
+
+/* TOPBAR */
+.topbar{display:flex;align-items:center;gap:10px;padding:0 20px;background:var(--sidebar-bg);border-bottom:1px solid var(--border);flex-shrink:0;height:58px}
+.logo-wrap{display:flex;align-items:center;gap:9px}
+.logo-name{font-size:19px;font-weight:700;color:var(--brown);line-height:1}
+.logo-sub{font-size:11px;color:var(--brown3);font-weight:400;margin-top:1px}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.live-badge{display:none;align-items:center;gap:6px;background:var(--card-bg);border:1px solid var(--border);border-radius:99px;padding:5px 13px;font-size:12px;font-weight:600;color:var(--text2)}
+.live-dot{width:7px;height:7px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}
+.stream-timer{font-size:13px;font-weight:600;color:var(--brown);display:none;font-variant-numeric:tabular-nums;letter-spacing:.5px}
+.tbtn{background:var(--card-bg);color:var(--text2);border:1px solid var(--border);border-radius:99px;padding:6px 13px;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font);transition:.15s;white-space:nowrap}
+.tbtn:hover{background:var(--cream);color:var(--text)}
+.tbtn.primary{background:var(--brown);color:#fff;border-color:var(--brown)}
+.tbtn.primary:hover{background:var(--brown2)}
+.tbtn.danger{background:var(--red);color:#fff;border-color:var(--red);display:none}
+.tbtn.danger:hover{opacity:.85}
+
+/* LAYOUT */
+.app-body{display:grid;grid-template-columns:290px 1fr;flex:1;overflow:hidden;height:calc(100vh - 58px)}
+
+/* SIDEBAR */
+.sidebar{background:var(--sidebar-bg);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto;overflow-x:hidden;padding:14px 12px 20px}
+.sidebar::-webkit-scrollbar{width:3px}
+.sidebar::-webkit-scrollbar-thumb{background:var(--cream2)}
+.sc{background:var(--card-bg);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:10px}
+.sc:last-child{margin-bottom:0}
+.sc-title{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;color:var(--brown);margin-bottom:11px}
+.sc-title svg{width:14px;height:14px;color:var(--brown3);flex-shrink:0}
+.sc-title button{margin-left:auto;background:none;border:none;cursor:pointer;font-size:11px;color:var(--brown3);font-family:var(--font);padding:0}
+.sc-title button:hover{color:var(--brown)}
+
+/* STAT ROWS */
+.stat-row{display:flex;align-items:center;gap:10px;margin-bottom:11px}
+.stat-row:last-child{margin-bottom:0}
+.stat-icon{width:36px;height:36px;border-radius:50%;background:var(--bg);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.stat-icon svg{width:16px;height:16px;color:var(--brown3)}
+.stat-val{font-size:20px;font-weight:700;color:var(--brown);line-height:1}
+.stat-lbl{font-size:11px;color:var(--text3);margin-top:1px}
+
+/* MOOD */
+.mood-val{font-size:14px;font-weight:700;color:var(--green);margin-bottom:7px}
+.mood-track{width:100%;height:7px;background:var(--cream);border-radius:99px;overflow:hidden;margin-bottom:6px}
+.mood-fill{height:100%;border-radius:99px;background:var(--green);transition:width .8s ease}
+.mood-desc{font-size:11px;color:var(--text3)}
+
+/* GOALS */
+.goal-item{margin-bottom:9px}
+.goal-item:last-child{margin-bottom:0}
+.goal-top{display:flex;justify-content:space-between;font-size:11px;margin-bottom:4px}
+.goal-name{font-weight:600;color:var(--text2)}
+.goal-num{color:var(--text3)}
+.goal-track{width:100%;height:6px;background:var(--cream);border-radius:99px;overflow:hidden}
+.goal-fill{height:100%;border-radius:99px;background:var(--brown3);transition:width .6s ease}
+.goal-fill.done{background:var(--green)}
+.goal-add{display:flex;gap:5px;margin-top:9px}
+.goal-add input{flex:1;background:var(--bg);border:1px solid var(--border2);border-radius:7px;padding:5px 8px;font-size:11px;font-family:var(--font);color:var(--text);outline:none}
+.goal-add input:focus{border-color:var(--brown3)}
+.goal-add button{background:var(--brown);border:none;color:#fff;border-radius:7px;padding:5px 9px;font-size:11px;cursor:pointer;font-family:var(--font)}
+
+/* HOT WORDS */
+.hot-words{display:flex;flex-wrap:wrap;gap:5px}
+.hw-tag{background:var(--cream);border:1px solid var(--border);border-radius:99px;padding:3px 10px;font-size:11px;color:var(--text2);font-weight:500}
+.hw-tag.hot1{background:var(--brown);color:#fff;border-color:var(--brown)}
+.hw-tag.hot2{background:var(--brown2);color:#fff;border-color:var(--brown2)}
+.hw-tag.hot3{background:var(--brown3);color:#fff;border-color:var(--brown3)}
+
+/* REPEATED Q */
+.rq-item{background:var(--bg);border-radius:8px;padding:8px 10px;font-size:12px;color:var(--text2);margin-bottom:6px;border-left:3px solid var(--brown3);cursor:pointer;transition:.15s}
+.rq-item:hover{background:var(--cream)}
+.rq-item:last-child{margin-bottom:0}
+.rq-count{font-size:10px;color:var(--brown3);font-weight:600;margin-bottom:2px}
+
+/* NOTES */
+.notes-area{width:100%;background:var(--bg);border:1px solid var(--border2);border-radius:8px;padding:8px 10px;font-size:12px;font-family:var(--font);color:var(--text);resize:none;outline:none;min-height:80px;line-height:1.6}
+.notes-area:focus{border-color:var(--brown3)}
+
+/* CLIPS */
+.clip-item{display:flex;align-items:center;gap:7px;padding:6px 0;border-bottom:1px solid var(--border);font-size:11px;color:var(--text2)}
+.clip-item:last-child{border-bottom:none}
+.clip-ts{font-weight:600;color:var(--brown);font-variant-numeric:tabular-nums;flex-shrink:0}
+.clip-note{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.clip-copy{background:none;border:none;cursor:pointer;font-size:13px;padding:2px;opacity:.5;transition:.15s}
+.clip-copy:hover{opacity:1}
+.clips-export{width:100%;margin-top:8px;padding:6px;border-radius:7px;background:var(--bg);border:1px solid var(--border2);font-size:11px;color:var(--text2);cursor:pointer;font-family:var(--font);transition:.15s}
+.clips-export:hover{background:var(--cream)}
+
+/* PERSONA */
+.persona-input{width:100%;background:var(--bg);border:1px solid var(--border2);border-radius:8px;padding:7px 9px;font-size:11px;font-family:var(--font);color:var(--text);resize:none;outline:none;min-height:54px;line-height:1.6}
+.persona-input:focus{border-color:var(--brown3)}
+
+/* CONNECT */
+.ptabs{display:flex;gap:5px;margin-bottom:8px}
+.ptab{flex:1;padding:6px 4px;border-radius:7px;border:1px solid var(--border);background:transparent;color:var(--text2);font-size:11px;font-weight:600;cursor:pointer;font-family:var(--font);display:flex;align-items:center;justify-content:center;gap:4px;transition:.15s}
+.ptab svg{width:12px;height:12px;flex-shrink:0}
+.ptab:hover{background:var(--bg)}
+.ptab.active{background:var(--brown);border-color:var(--brown);color:#fff}
+.flabel{font-size:11px;font-weight:600;color:var(--text2);margin-bottom:2px;display:block}
+.finput{background:var(--bg);border:1px solid var(--border2);border-radius:7px;padding:7px 9px;color:var(--text);font-size:11px;font-family:var(--font);outline:none;width:100%;transition:.15s}
+.finput:focus{border-color:var(--brown3)}
+.finput::placeholder{color:var(--text3)}
+.small-note{font-size:10px;color:var(--text3);line-height:1.5;margin-top:3px}
+.small-note a{color:var(--brown3);text-decoration:none}
+.conn-btn{width:100%;margin-top:6px;padding:9px;border-radius:99px;background:var(--brown);border:none;color:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font);transition:.15s}
+.conn-btn:hover{background:var(--brown2)}
+.status-row{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text2);margin-top:5px}
+.sdot{width:6px;height:6px;border-radius:50%;background:var(--text3);flex-shrink:0}
+.sdot.on{background:var(--green);animation:pulse 2s infinite}
+.sdot.err{background:var(--red)}
+.sdot.busy{background:var(--amber);animation:blink .6s infinite}
+
+/* TOGGLES */
+.toggle-list{display:flex;flex-direction:column;gap:6px}
+.toggle-row{display:flex;align-items:center;justify-content:space-between;font-size:11px;color:var(--text2)}
+.tog{position:relative;width:30px;height:17px;cursor:pointer;flex-shrink:0}
+.tog input{opacity:0;width:0;height:0}
+.tog-sl{position:absolute;inset:0;background:var(--cream2);border-radius:99px;transition:.2s}
+.tog input:checked+.tog-sl{background:var(--green)}
+.tog-sl:before{content:'';position:absolute;width:11px;height:11px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.2s}
+.tog input:checked+.tog-sl:before{transform:translateX(13px)}
+.freq-row{display:flex;align-items:center;justify-content:space-between;font-size:11px;color:var(--text2);margin-top:5px}
+.freq-sel{background:var(--bg);border:1px solid var(--border2);border-radius:5px;padding:3px 6px;color:var(--text);font-size:10px;font-family:var(--font);outline:none;cursor:pointer}
+
+/* MAIN PANEL */
+.main-panel{background:var(--chat-bg);display:flex;flex-direction:column;overflow:hidden}
+
+/* TABS */
+.tab-bar{display:flex;gap:2px;padding:10px 16px 0;flex-shrink:0;border-bottom:1px solid var(--border)}
+.tab{padding:8px 14px;border-radius:8px 8px 0 0;font-size:12px;font-weight:600;cursor:pointer;color:var(--text3);border:1px solid transparent;border-bottom:none;transition:.15s;background:transparent;font-family:var(--font);display:flex;align-items:center;gap:5px}
+.tab:hover{color:var(--text2);background:var(--cream)}
+.tab.active{color:var(--brown);background:var(--card-bg);border-color:var(--border);border-bottom-color:var(--card-bg);margin-bottom:-1px}
+.tab-badge{background:var(--brown);color:#fff;border-radius:99px;font-size:9px;padding:1px 5px;font-weight:700;display:none}
+.tab-badge.show{display:inline}
+
+/* TAB CONTENT */
+.tab-pane{display:none;flex:1;flex-direction:column;overflow:hidden}
+.tab-pane.active{display:flex}
+
+/* COACH FEED */
+.ai-pill-wrap{display:flex;justify-content:center;padding:12px 0 6px;flex-shrink:0}
+.ai-pill{background:var(--cream);border:1px solid var(--border2);border-radius:99px;padding:5px 16px;font-size:12px;font-weight:500;color:var(--brown2)}
+.msg-feed{flex:1;overflow-y:auto;padding:8px 16px 6px;display:flex;flex-direction:column;gap:8px}
+.msg-feed::-webkit-scrollbar{width:3px}
+.msg-feed::-webkit-scrollbar-thumb{background:var(--cream2);border-radius:2px}
+.msg-wrap{display:flex;align-items:flex-start;gap:10px;animation:fadeUp .3s ease}
+.cup-av{width:44px;height:44px;border-radius:50%;background:var(--cream);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.cup-av svg{width:26px;height:26px}
+.msg-bubble{background:var(--card-bg);border-radius:0 12px 12px 12px;padding:11px 14px 8px;box-shadow:0 1px 3px #0000000a;flex:1;max-width:700px}
+.msg-bubble.good{border-left:3px solid var(--green)}
+.msg-bubble.warn{border-left:3px solid var(--amber)}
+.msg-bubble.info{border-left:3px solid var(--brown3)}
+.msg-bubble.clip{border-left:3px solid #7C4DFF}
+.msg-text{font-size:13px;color:var(--text2);line-height:1.65}
+.msg-text strong{color:var(--text);font-weight:600}
+.msg-text a{color:var(--brown2);text-decoration:none}
+.msg-text code{background:var(--cream);padding:1px 5px;border-radius:4px;font-size:12px;font-family:monospace}
+.msg-time{font-size:10px;color:var(--text3);text-align:right;margin-top:4px}
+.msg-actions{display:flex;gap:5px;margin-top:7px;flex-wrap:wrap}
+.msg-act-btn{padding:5px 11px;border-radius:99px;background:var(--bg);border:1px solid var(--border2);font-size:11px;color:var(--text2);cursor:pointer;font-family:var(--font);font-weight:500;transition:.15s}
+.msg-act-btn:hover{background:var(--cream);color:var(--text)}
+.empty-state{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px;text-align:center;color:var(--text3);font-size:13px;line-height:1.8;gap:10px}
+.empty-cup{font-size:44px;opacity:.35}
+
+/* LIVE CHAT TAB */
+.chat-feed{flex:1;overflow-y:auto;padding:8px 16px 6px;display:flex;flex-direction:column;gap:4px}
+.chat-feed::-webkit-scrollbar{width:3px}
+.chat-feed::-webkit-scrollbar-thumb{background:var(--cream2)}
+.chat-line{display:flex;gap:8px;align-items:flex-start;padding:5px 8px;border-radius:8px;transition:.1s}
+.chat-line:hover{background:var(--card-bg)}
+.chat-av{width:28px;height:28px;border-radius:50%;background:var(--cream);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--brown3);flex-shrink:0}
+.chat-av.mod{border-color:var(--green);color:var(--green)}
+.chat-av.sub{border-color:var(--brown3);color:var(--brown3)}
+.chat-av.new{border-color:#7C4DFF;color:#7C4DFF}
+.chat-content{flex:1}
+.chat-user{font-size:12px;font-weight:600;color:var(--brown2);display:inline;margin-right:4px}
+.chat-user.mod{color:var(--green)}
+.chat-user.sub{color:var(--brown3)}
+.chat-user.new{color:#7C4DFF}
+.chat-badge{font-size:9px;padding:1px 5px;border-radius:3px;font-weight:700;margin-right:3px;vertical-align:middle}
+.badge-new{background:#7C4DFF22;color:#7C4DFF}
+.badge-sub{background:var(--cream);color:var(--brown3)}
+.badge-mod{background:#4A7C5920;color:var(--green)}
+.chat-msg-text{font-size:12px;color:var(--text2);display:inline;line-height:1.5}
+.chat-ts{font-size:10px;color:var(--text3);margin-left:5px}
+.chat-stats-bar{display:flex;gap:0;border-bottom:1px solid var(--border);flex-shrink:0}
+.cs-cell{flex:1;padding:8px 0;text-align:center;border-right:1px solid var(--border)}
+.cs-cell:last-child{border-right:none}
+.cs-val{font-size:17px;font-weight:700;color:var(--brown)}
+.cs-lbl{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.4px}
+
+/* QA QUEUE TAB */
+.qa-feed{flex:1;overflow-y:auto;padding:10px 16px}
+.qa-item{background:var(--card-bg);border-radius:10px;border:1px solid var(--border);padding:11px 13px;margin-bottom:8px;display:flex;gap:10px;align-items:flex-start}
+.qa-badge{background:var(--brown);color:#fff;border-radius:99px;padding:2px 8px;font-size:10px;font-weight:700;flex-shrink:0;margin-top:2px}
+.qa-badge.ans{background:var(--green)}
+.qa-content{flex:1}
+.qa-q{font-size:13px;color:var(--text);font-weight:500;margin-bottom:3px}
+.qa-from{font-size:11px;color:var(--text3)}
+.qa-btns{display:flex;gap:5px;margin-top:7px;flex-wrap:wrap}
+.qa-btn-sm{padding:4px 10px;border-radius:99px;border:1px solid var(--border2);background:var(--bg);font-size:11px;color:var(--text2);cursor:pointer;font-family:var(--font);font-weight:500;transition:.15s}
+.qa-btn-sm:hover{background:var(--cream)}
+.qa-btn-sm.mark{background:var(--green);color:#fff;border-color:var(--green)}
+
+/* NOTES TAB */
+.notes-tab-inner{flex:1;padding:14px 16px;display:flex;flex-direction:column;gap:10px;overflow-y:auto}
+.notes-full{flex:1;background:var(--card-bg);border:1px solid var(--border);border-radius:12px;padding:14px;font-size:13px;font-family:var(--font);color:var(--text);resize:none;outline:none;line-height:1.7;min-height:200px}
+.notes-full:focus{border-color:var(--brown3)}
+.notes-actions{display:flex;gap:7px;flex-wrap:wrap}
+.notes-btn{padding:8px 16px;border-radius:99px;border:1px solid var(--border2);background:var(--card-bg);font-size:12px;color:var(--text2);cursor:pointer;font-family:var(--font);font-weight:500;transition:.15s}
+.notes-btn:hover{background:var(--cream)}
+.notes-btn.primary{background:var(--brown);color:#fff;border-color:var(--brown)}
+.notes-btn.primary:hover{background:var(--brown2)}
+
+/* BOTTOM BAR */
+.input-bar{padding:10px 16px;background:var(--chat-bg);flex-shrink:0;border-top:1px solid var(--border)}
+.input-inner{background:var(--card-bg);border:1px solid var(--border2);border-radius:99px;display:flex;align-items:center;gap:7px;padding:8px 8px 8px 14px;box-shadow:0 1px 6px #0000000a}
+.input-emoji{font-size:17px;opacity:.45;flex-shrink:0}
+.input-field{flex:1;border:none;background:transparent;font-size:13px;color:var(--text);font-family:var(--font);outline:none}
+.input-field::placeholder{color:var(--text3)}
+.send-btn{width:34px;height:34px;border-radius:50%;background:var(--brown);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:.15s}
+.send-btn:hover{background:var(--brown2)}
+.send-btn svg{width:14px;height:14px;color:#fff}
+.bottom-actions{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap}
+.ba-btn{flex:1;padding:7px;border-radius:99px;border:1px solid var(--border2);background:var(--card-bg);font-size:11px;font-weight:600;cursor:pointer;font-family:var(--font);color:var(--text2);transition:.15s;white-space:nowrap;min-width:0;text-align:center}
+.ba-btn:hover{background:var(--cream);color:var(--text)}
+.ba-btn.primary{background:var(--brown);color:#fff;border-color:var(--brown)}
+.ba-btn.primary:hover{background:var(--brown2)}
+.ba-btn:disabled{opacity:.35;cursor:not-allowed}
+.inject-row{display:flex;gap:6px;margin-top:5px}
+.inject-row input{flex:1;background:var(--card-bg);border:1px solid var(--border2);border-radius:99px;padding:6px 12px;font-size:11px;font-family:var(--font);color:var(--text);outline:none}
+.inject-row input:focus{border-color:var(--brown3)}
+.inject-row button{background:var(--bg);border:1px solid var(--border2);border-radius:99px;padding:6px 12px;font-size:11px;color:var(--text2);cursor:pointer;font-family:var(--font);white-space:nowrap;transition:.15s}
+.inject-row button:hover{background:var(--cream)}
+
+/* MODAL */
+.modal-bg{position:fixed;inset:0;background:#00000055;display:none;align-items:center;justify-content:center;z-index:100;backdrop-filter:blur(3px)}
+.modal-bg.open{display:flex}
+.modal{background:var(--card-bg);border:1px solid var(--border);border-radius:18px;padding:24px;width:min(440px,94vw);display:flex;flex-direction:column;gap:12px;box-shadow:0 8px 40px #0000001a;max-height:90vh;overflow-y:auto}
+.modal h3{font-size:16px;font-weight:700;color:var(--brown)}
+.modal p{font-size:12px;color:var(--text2);line-height:1.65}
+.modal-url{background:var(--bg);border:1px solid var(--border2);border-radius:7px;padding:8px 11px;font-size:11px;color:var(--brown2);font-family:monospace;word-break:break-all}
+.modal-actions{display:flex;gap:6px;flex-wrap:wrap}
+.mbtn{flex:1;padding:9px;border-radius:99px;border:1px solid var(--border2);background:transparent;color:var(--text);font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font);transition:.15s}
+.mbtn:hover{background:var(--bg)}
+.mbtn.primary{background:var(--brown);border-color:var(--brown);color:#fff}
+.mbtn.primary:hover{background:var(--brown2)}
+.recap-box{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px;font-size:12px;color:var(--text2);line-height:1.7;max-height:240px;overflow-y:auto;white-space:pre-wrap}
+
+/* TOAST */
+.toast-area{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;gap:5px;align-items:center;z-index:200;pointer-events:none}
+.toast{background:var(--brown);color:#fff;border-radius:99px;padding:8px 18px;font-size:12px;font-weight:500;animation:fadeUp .2s ease;box-shadow:0 4px 14px #0000002a;font-family:var(--font);pointer-events:all;white-space:nowrap}
+
+/* MOOD BAR IN MSG */
+.mbars{display:flex;flex-direction:column;gap:3px;margin-top:8px}
+.mbar{display:flex;align-items:center;gap:7px;font-size:11px;color:var(--text3)}
+.mbar span:first-child{width:50px;flex-shrink:0}
+.mbar-track{flex:1;height:4px;background:var(--cream);border-radius:99px;overflow:hidden}
+.mbar-fill{height:100%;border-radius:99px;transition:width .7s ease}
+.mbar span:last-child{width:26px;text-align:right}
+
+/* ANIMS */
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:translateY(0)}}
+@keyframes slideDown{from{opacity:0;max-height:0;overflow:hidden}to{opacity:1;max-height:1000px}}
+@keyframes slideUp{from{opacity:1;max-height:1000px;overflow:hidden}to{opacity:0;max-height:0}}
+@keyframes fadeInScale{from{opacity:0;transform:scale(.98)}to{opacity:1;transform:scale(1)}}
+.spin{animation:spin .8s linear infinite;display:inline-block}
+
+/* SETTINGS SECTIONS */
+.settings-section-title{font-size:12px;font-weight:700;color:var(--brown);margin-bottom:3px}
+.settings-section-desc{font-size:11px;color:var(--text3);margin-bottom:10px;line-height:1.5}
+.stog-list{display:flex;flex-direction:column;gap:2px}
+.stog-row{display:flex;align-items:center;justify-content:space-between;padding:9px 10px;border-radius:9px;transition:background .15s;gap:10px}
+.stog-row:hover{background:var(--bg)}
+.stog-info{flex:1;min-width:0}
+.stog-label{font-size:12px;font-weight:600;color:var(--text);line-height:1.3}
+.stog-desc{font-size:11px;color:var(--text3);margin-top:2px;line-height:1.4}
+.stt-btn{flex:1;padding:7px 10px;border-radius:99px;border:1px solid var(--border2);background:var(--bg);font-size:11px;font-weight:600;color:var(--text2);cursor:pointer;font-family:var(--font);transition:.15s}
+.stt-btn:hover{background:var(--cream);color:var(--text)}
+.settings-toggle{position:fixed;bottom:20px;right:20px;width:56px;height:56px;border-radius:50%;background:var(--brown);border:none;color:#fff;font-size:24px;cursor:pointer;box-shadow:0 4px 16px #0000002a;display:flex;align-items:center;justify-content:center;transition:all .3s cubic-bezier(.4,0,.2,1);z-index:99;transform:translateZ(0);backface-visibility:hidden}
+.settings-toggle:hover{background:var(--brown2);transform:scale(1.1);box-shadow:0 8px 24px #0000003a}
+.settings-toggle.active{background:var(--red);animation:spin .5s ease-out}
+.settings-overlay{position:fixed;inset:0;background:#00000055;display:none;z-index:98;backdrop-filter:blur(3px);animation:fadeInScale .3s ease}
+.settings-overlay.open{display:block}
+.settings-panel{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--card-bg);border:1px solid var(--border);border-radius:20px;padding:24px;width:min(520px,90vw);max-height:85vh;overflow-y:auto;z-index:101;box-shadow:0 20px 60px #0000001a;animation:fadeInScale .3s cubic-bezier(.4,0,.2,1)}
+.settings-panel h3{font-size:18px;font-weight:700;color:var(--brown);margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.settings-section{margin-bottom:16px}
+.settings-section .toggle-row{padding:10px;border-radius:10px;transition:background .2s;margin-bottom:8px}
+.settings-section .toggle-row:hover{background:var(--bg)}
+.close-settings{position:absolute;top:14px;right:14px;background:none;border:none;font-size:24px;cursor:pointer;color:var(--text3);transition:.2s}
+.close-settings:hover{color:var(--text);transform:rotate(90deg)}
+.simple-mode .sc.advanced{display:none}
+
+/* SOUND toggle */
+.sound-row{display:flex;align-items:center;justify-content:space-between;font-size:11px;color:var(--text2);margin-top:6px}
+
+/* DONATION LIST TAB */
+.donation-feed{flex:1;overflow-y:auto;padding:10px 16px}
+.donation-item{background:var(--card-bg);border-radius:10px;border:1px solid var(--border);padding:11px 13px;margin-bottom:8px;display:flex;gap:10px;align-items:flex-start;position:relative}
+.donation-item.thanked{border-color:var(--green);opacity:.75}
+.donation-amount{background:var(--green);color:#fff;border-radius:8px;padding:4px 9px;font-size:13px;font-weight:700;flex-shrink:0;margin-top:1px;white-space:nowrap}
+.donation-amount.bits{background:var(--brown3)}
+.donation-content{flex:1}
+.donation-user{font-size:13px;font-weight:600;color:var(--brown);margin-bottom:2px}
+.donation-msg{font-size:12px;color:var(--text2);line-height:1.5;margin-bottom:6px}
+.donation-time{font-size:10px;color:var(--text3)}
+.donation-btns{display:flex;gap:5px;flex-wrap:wrap;margin-top:5px}
+.don-btn{padding:4px 10px;border-radius:99px;border:1px solid var(--border2);background:var(--bg);font-size:11px;color:var(--text2);cursor:pointer;font-family:var(--font);font-weight:500;transition:.15s}
+.don-btn:hover{background:var(--cream)}
+.don-btn.primary{background:var(--brown);color:#fff;border-color:var(--brown)}
+.don-btn.primary:hover{background:var(--brown2)}
+.don-btn.done{background:var(--green);color:#fff;border-color:var(--green);cursor:default}
+.don-stats-bar{display:flex;gap:0;border-bottom:1px solid var(--border);flex-shrink:0}
+.don-inject-row{display:flex;gap:6px;padding:8px 16px;border-top:1px solid var(--border);flex-shrink:0;align-items:center}
+.don-inject-row input{flex:1;background:var(--card-bg);border:1px solid var(--border2);border-radius:99px;padding:6px 12px;font-size:11px;font-family:var(--font);color:var(--text);outline:none}
+.don-inject-row input:focus{border-color:var(--brown3)}
+.don-inject-row button{background:var(--brown);border:none;border-radius:99px;padding:6px 13px;font-size:11px;color:#fff;cursor:pointer;font-family:var(--font);white-space:nowrap;font-weight:600}
+
+/* PANEL CUSTOMIZER in Settings */
+.panel-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:8px}
+.panel-card{background:var(--bg);border:2px solid var(--border);border-radius:10px;padding:9px 10px;cursor:pointer;transition:.15s;display:flex;align-items:center;gap:7px;font-size:11px;font-weight:600;color:var(--text2)}
+.panel-card:hover{border-color:var(--brown3);background:var(--cream)}
+.panel-card.on{border-color:var(--brown);background:var(--brown);color:#fff}
+.panel-card svg{width:13px;height:13px;flex-shrink:0}
+
+/* AI WATCHLIST */
+.watchlist-items{display:flex;flex-direction:column;gap:5px;margin-bottom:7px}
+.watchlist-tag{display:flex;align-items:center;gap:6px;background:var(--bg);border:1px solid var(--border2);border-radius:7px;padding:5px 8px;font-size:11px;color:var(--text2)}
+.watchlist-tag span{flex:1}
+.watchlist-tag button{background:none;border:none;cursor:pointer;font-size:13px;color:var(--text3);padding:0;line-height:1;transition:.15s}
+.watchlist-tag button:hover{color:var(--red)}
+.watchlist-add{display:flex;gap:5px}
+.watchlist-add input{flex:1;background:var(--bg);border:1px solid var(--border2);border-radius:7px;padding:5px 8px;font-size:11px;font-family:var(--font);color:var(--text);outline:none}
+.watchlist-add input:focus{border-color:var(--brown3)}
+.watchlist-add button{background:var(--brown);border:none;color:#fff;border-radius:7px;padding:5px 10px;font-size:11px;cursor:pointer;font-family:var(--font);font-weight:600}
+
+/* PRESETS */
+.preset-list{display:flex;flex-direction:column;gap:5px;margin-bottom:8px}
+.preset-row{display:flex;align-items:center;gap:6px;background:var(--bg);border:1px solid var(--border2);border-radius:8px;padding:6px 9px}
+.preset-name{flex:1;font-size:12px;font-weight:600;color:var(--text)}
+.preset-desc{font-size:10px;color:var(--text3);margin-top:1px}
+.preset-btns{display:flex;gap:4px}
+.preset-btn{padding:3px 9px;border-radius:99px;border:1px solid var(--border2);background:var(--card-bg);font-size:10px;color:var(--text2);cursor:pointer;font-family:var(--font);font-weight:600;transition:.15s}
+.preset-btn:hover{background:var(--cream)}
+.preset-btn.load{background:var(--brown);color:#fff;border-color:var(--brown)}
+.preset-btn.load:hover{background:var(--brown2)}
+.preset-btn.del{color:var(--red);border-color:transparent}
+.preset-btn.del:hover{background:#ffeaea}
+.preset-save-row{display:flex;gap:5px}
+.preset-save-row input{flex:1;background:var(--bg);border:1px solid var(--border2);border-radius:7px;padding:6px 9px;font-size:11px;font-family:var(--font);color:var(--text);outline:none}
+.preset-save-row input:focus{border-color:var(--brown3)}
+.preset-save-row button{background:var(--brown);border:none;color:#fff;border-radius:7px;padding:6px 12px;font-size:11px;cursor:pointer;font-family:var(--font);font-weight:600;white-space:nowrap}
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="logo-wrap">
+    <svg width="36" height="36" viewBox="0 0 40 40" fill="none">
+      <circle cx="20" cy="20" r="20" fill="#F5F0E8"/>
+      <path d="M12 9 Q13.5 6 12 4" stroke="#9B7355" stroke-width="1.4" stroke-linecap="round" fill="none"/>
+      <path d="M17 8 Q18.5 4.5 17 3" stroke="#9B7355" stroke-width="1.4" stroke-linecap="round" fill="none"/>
+      <path d="M22 9 Q23.5 6 22 4" stroke="#9B7355" stroke-width="1.4" stroke-linecap="round" fill="none"/>
+      <path d="M7 12 H31 L29 28 Q28.5 30 26.5 30 H11.5 Q9.5 30 9 28Z" fill="#3D2B1F"/>
+      <ellipse cx="19" cy="13" rx="11" ry="2.5" fill="#5C3D2A"/>
+      <ellipse cx="19" cy="13" rx="9" ry="1.8" fill="#7A4E32"/>
+      <path d="M31 18 Q37 18 37 22 Q37 26 31 26" stroke="#3D2B1F" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+      <ellipse cx="19" cy="31.5" rx="13" ry="2.5" fill="#2C1A0E" opacity=".35"/>
+    </svg>
+    <div>
+      <div class="logo-name">StreamLine</div>
+      <div class="logo-sub">your stream assistant</div>
+    </div>
+  </div>
+  <div class="topbar-right">
+    <div class="live-badge" id="live-badge"><div class="live-dot"></div>LIVE</div>
+    <span class="stream-timer" id="stream-timer">0:00:00</span>
+    <button class="tbtn" onclick="openCoachModal()">Coach View</button>
+    <button class="tbtn danger" id="end-stream-btn" onclick="endStream()">End Stream</button>
+  </div>
+</div>
+
+<div class="app-body">
+
+<!-- ══════ SIDEBAR ══════ -->
+<div class="sidebar">
+
+  <!-- Live Stats -->
+  <div class="sc" id="sc-livestats">
+    <div class="sc-title">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
+      Live Stats
+    </div>
+    <div class="stat-row">
+      <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+      <div><div class="stat-val" id="stat-viewers">—</div><div class="stat-lbl">Chatters</div></div>
+    </div>
+    <div class="stat-row">
+      <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>
+      <div><div class="stat-val" id="stat-rate">0</div><div class="stat-lbl">Msgs / min</div></div>
+    </div>
+    <div class="stat-row">
+      <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg></div>
+      <div><div class="stat-val" id="stat-total">0</div><div class="stat-lbl">Total messages</div></div>
+    </div>
+    <div class="stat-row">
+      <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div>
+      <div><div class="stat-val" id="stat-clips">0</div><div class="stat-lbl">Clip moments</div></div>
+    </div>
+  </div>
+
+  <!-- Chat Mood -->
+  <div class="sc advanced" id="sc-mood">
+    <div class="sc-title">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2M9 9h.01M15 9h.01"/></svg>
+      Chat Mood
+    </div>
+    <div class="mood-val" id="mood-val">Positive</div>
+    <div class="mood-track"><div class="mood-fill" id="mood-fill" style="width:70%"></div></div>
+    <div class="mood-desc" id="mood-desc">Connect to see live analysis</div>
+  </div>
+
+  <!-- Stream Goals -->
+  <div class="sc advanced" id="sc-goals">
+    <div class="sc-title">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+      Stream Goals
+      <button onclick="clearGoals()">Clear</button>
+    </div>
+    <div id="goals-list"></div>
+    <div style="font-size:10px;color:var(--text3);margin-top:2px;margin-bottom:5px">e.g. name "Followers", target 500</div>
+    <div class="goal-add">
+      <input id="goal-name" placeholder="Goal name" style="flex:1.5;min-width:0"/>
+      <input id="goal-target" placeholder="Target" type="number" min="1" style="flex:.8;min-width:0"/>
+      <button onclick="addGoal()">+</button>
+    </div>
+  </div>
+
+  <!-- Hot Words -->
+  <div class="sc advanced" id="sc-hotwords">
+    <div class="sc-title">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/><path d="M15 9l-6 6M9 9l6 6"/></svg>
+      Hot Words
+    </div>
+    <div class="hot-words" id="hot-words"><span style="font-size:11px;color:var(--text3)">Chat words will appear here…</span></div>
+  </div>
+
+  <!-- Repeated Questions -->
+  <div class="sc advanced" id="sc-rq">
+    <div class="sc-title">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3M12 17h.01"/></svg>
+      Viewers Asking
+      <button onclick="clearRQ()">Clear</button>
+    </div>
+    <div id="rq-list"><span style="font-size:11px;color:var(--text3)">Repeated questions will surface here…</span></div>
+  </div>
+
+  <!-- Clip Log -->
+  <div class="sc advanced" id="sc-clips">
+    <div class="sc-title">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+      Clip Moments
+      <button onclick="addClipNow()">+ Now</button>
+    </div>
+    <div id="clip-list"><span style="font-size:11px;color:var(--text3)">No clips yet — AI will flag moments automatically.</span></div>
+    <button class="clips-export" onclick="exportClips()">Copy all timestamps</button>
+  </div>
+
+  <!-- Persona -->
+  <div class="sc advanced" id="sc-persona">
+    <div class="sc-title">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      Streamer Context
+    </div>
+    <textarea class="persona-input" id="persona-input" placeholder="Tell the AI about you: game, style, audience, goals…&#10;e.g. Playing Minecraft hardcore survival, casual friendly streamer, 18-25 audience." onblur="savePersona()" oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,120)+'px'" style="resize:none;overflow:hidden;min-height:64px"></textarea>
+    <div style="font-size:10px;color:var(--text3);margin-top:4px">Auto-saved when you click away</div>
+  </div>
+
+  <!-- AI Watchlist -->
+  <div class="sc advanced" id="sc-watchlist">
+    <div class="sc-title">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+      AI Watchlist
+      <button onclick="clearWatchlist()">Clear</button>
+    </div>
+    <div style="font-size:11px;color:var(--text3);margin-bottom:7px;line-height:1.5">Tell the AI exactly what to look out for in chat — specific phrases, behaviors, or topics.</div>
+    <div class="watchlist-items" id="watchlist-items"></div>
+    <div class="watchlist-add">
+      <input id="watchlist-input" placeholder="e.g. hate speech, spam links, my name…" onkeydown="if(event.key==='Enter')addWatchItem()"/>
+      <button onclick="addWatchItem()">+</button>
+    </div>
+  </div>
+
+  <!-- Connect -->
+  <div class="sc" id="sc-connect">
+    <div class="sc-title">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 6l6-3 6 3v12l-6 3-6-3z"/><path d="M14 21V9M8 6v12M14 9l-6-3"/></svg>
+      Connect — YouTube
+    </div>
+    <label class="flabel">Live Chat ID</label>
+    <input class="finput" id="yt-chatid" placeholder="Lc0M3..."/>
+    <label class="flabel" style="margin-top:6px">YouTube API Key</label>
+    <input class="finput" id="yt-apikey" type="password" placeholder="AIza..."/>
+
+    <!-- Chat ID Finder -->
+    <div style="margin-top:8px;background:var(--bg);border:1px solid var(--border2);border-radius:9px;padding:10px">
+      <div style="font-size:11px;font-weight:700;color:var(--brown);margin-bottom:6px">🔍 Chat ID Finder</div>
+      <div class="flabel">Video ID (from youtube.com/watch?v=<strong>THIS</strong>)</div>
+      <div style="display:flex;gap:5px;margin-top:3px">
+        <input class="finput" id="yt-video-id" placeholder="e.g. dQw4w9WgXcQ" style="flex:1"/>
+        <button onclick="fetchChatId()" style="background:var(--brown);border:none;color:#fff;border-radius:7px;padding:6px 10px;font-size:11px;cursor:pointer;font-family:var(--font);white-space:nowrap">Get ID</button>
+      </div>
+      <div id="chatid-result" style="display:none;margin-top:7px;background:var(--card-bg);border:1px solid var(--border);border-radius:7px;padding:8px;font-size:11px;color:var(--text2);line-height:1.6"></div>
+    </div>
+
+    <!-- Debug Log -->
+    <div id="yt-debug-panel" style="display:none;margin-top:8px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px">
+        <div style="font-size:11px;font-weight:700;color:var(--brown)">🐛 Debug Log</div>
+        <button onclick="clearDebug()" style="font-size:10px;color:var(--text3);background:none;border:none;cursor:pointer;font-family:var(--font)">Clear</button>
+      </div>
+      <div id="yt-debug-log" style="background:var(--bg);border:1px solid var(--border2);border-radius:8px;padding:8px;max-height:180px;overflow-y:auto;font-family:monospace"></div>
+    </div>
+
+    <div class="small-note" style="margin-top:6px">Enable YouTube Data API v3 at <a href="https://console.cloud.google.com" target="_blank">console.cloud.google.com</a></div>
+    <button class="conn-btn" id="conn-btn" onclick="toggleConnect()">Connect to Chat</button>
+    <div class="status-row"><div class="sdot" id="sdot"></div><span id="status-text">Not connected</span></div>
+  </div>
+
+  <!-- AI Settings -->
+  <div class="sc advanced" id="sc-aicoach">
+    <div class="sc-title">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93l-1.41 1.41M4.93 19.07l1.41-1.41M4.93 4.93l1.41 1.41M19.07 19.07l-1.41-1.41M1 12h2M21 12h2M12 1v2M12 21v2"/></svg>
+      AI Coach
+    </div>
+    <label class="flabel">CometAPI Key <span style="color:var(--text3);font-weight:400">(free at cometapi.com)</span></label>
+    <input class="finput" id="comet-key" type="password" placeholder="sk-..." autocomplete="off"/>
+    <div class="small-note">Uses <strong>gemini-3-flash</strong>. Get a key at <a href="https://cometapi.com" target="_blank">cometapi.com</a></div>
+    <div style="margin-top:8px;padding:8px 10px;background:var(--bg);border-radius:8px;border:1px solid var(--border);font-size:11px;color:var(--text3);display:flex;align-items:center;gap:6px">
+      <span style="font-size:14px">⚙</span> AI features, analysis toggles, sound &amp; display settings → tap the <strong style="color:var(--brown)">⚙</strong> button bottom-right
+    </div>
+  </div>
+  <div style="text-align:center;padding:14px 0 4px;opacity:.55">
+    <svg width="72" height="70" viewBox="0 0 120 100" fill="none">
+      <path d="M35 22 Q38 14 34 8" stroke="#C4A882" stroke-width="2" stroke-linecap="round" fill="none"/>
+      <path d="M50 18 Q53 9 49 3" stroke="#C4A882" stroke-width="2" stroke-linecap="round" fill="none"/>
+      <path d="M65 22 Q68 14 64 8" stroke="#C4A882" stroke-width="2" stroke-linecap="round" fill="none"/>
+      <path d="M18 32 H90 L85 72 Q83 78 76 78 H32 Q25 78 23 72 Z" fill="#3D2B1F"/>
+      <ellipse cx="54" cy="34" rx="34" ry="6" fill="#5C3D2A"/>
+      <ellipse cx="54" cy="34" rx="30" ry="4.5" fill="#8B5E3C"/>
+      <path d="M90 46 Q108 46 108 58 Q108 70 90 70" stroke="#3D2B1F" stroke-width="6" fill="none" stroke-linecap="round"/>
+      <ellipse cx="54" cy="82" rx="42" ry="7" fill="#3D2B1F" opacity=".5"/>
+      <ellipse cx="20" cy="90" rx="8" ry="5" fill="#3D2B1F" transform="rotate(-20 20 90)"/>
+      <ellipse cx="34" cy="94" rx="7" ry="4.5" fill="#2C1A0E" transform="rotate(10 34 94)"/>
+    </svg>
+  </div>
+
+</div>
+<!-- ══════ END SIDEBAR ══════ -->
+
+<!-- ══════ MAIN PANEL ══════ -->
+<div class="main-panel">
+
+  <!-- TABS -->
+  <div class="tab-bar">
+    <button class="tab active" onclick="switchTab('coach',this)">AI Coach</button>
+    <button class="tab" onclick="switchTab('livechat',this)">Live Chat <span class="tab-badge" id="chat-badge">0</span></button>
+    <button class="tab" onclick="switchTab('qa',this)">Q&A Queue <span class="tab-badge" id="qa-badge">0</span></button>
+    <button class="tab" onclick="switchTab('donations',this)">💰 Donations <span class="tab-badge" id="don-badge">0</span></button>
+    <button class="tab" onclick="switchTab('notes',this)">Notes</button>
+  </div>
+
+  <!-- ─── TAB: AI COACH ─── -->
+  <div class="tab-pane active" id="pane-coach">
+    <div class="ai-pill-wrap"><div class="ai-pill">StreamLine AI</div></div>
+    <div class="msg-feed" id="msg-feed">
+      <div class="empty-state" id="empty-state">
+        <span class="empty-cup">▪</span>
+        Connect to your stream on the left,<br>add your Anthropic key, then ask me anything below.
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── TAB: LIVE CHAT ─── -->
+  <div class="tab-pane" id="pane-livechat">
+    <div class="chat-stats-bar">
+      <div class="cs-cell"><div class="cs-val" id="cs-msgs">0</div><div class="cs-lbl">Messages</div></div>
+      <div class="cs-cell"><div class="cs-val" id="cs-rate">0</div><div class="cs-lbl">Msgs/min</div></div>
+      <div class="cs-cell"><div class="cs-val" id="cs-chatters">0</div><div class="cs-lbl">Chatters</div></div>
+    </div>
+    <div class="chat-feed" id="chat-feed">
+      <div class="empty-state"><span class="empty-cup">●</span>Chat messages will appear here once connected.</div>
+    </div>
+  </div>
+
+  <!-- ─── TAB: Q&A QUEUE ─── -->
+  <div class="tab-pane" id="pane-qa">
+    <div class="qa-feed" id="qa-feed">
+      <div class="empty-state"><span class="empty-cup">?</span>Viewer questions will be surfaced here by AI analysis.</div>
+    </div>
+  </div>
+
+  <!-- ─── TAB: DONATIONS ─── -->
+  <div class="tab-pane" id="pane-donations">
+    <div class="don-stats-bar">
+      <div class="cs-cell"><div class="cs-val" id="don-total-count">0</div><div class="cs-lbl">Donations</div></div>
+      <div class="cs-cell"><div class="cs-val" id="don-total-amount">$0</div><div class="cs-lbl">Total</div></div>
+      <div class="cs-cell"><div class="cs-val" id="don-thanked-count">0</div><div class="cs-lbl">Thanked</div></div>
+    </div>
+    <div class="donation-feed" id="donation-feed">
+      <div class="empty-state"><span class="empty-cup">💰</span>Donations will appear here.<br>Use the row below to log one manually.</div>
+    </div>
+    <div class="don-inject-row">
+      <input id="don-name" placeholder="Username" style="max-width:110px"/>
+      <input id="don-amount" placeholder="$5.00 or 500 bits" style="max-width:110px"/>
+      <input id="don-msg" placeholder="Message (optional)"/>
+      <button onclick="logDonation()">+ Log</button>
+    </div>
+  </div>
+
+  <!-- ─── TAB: NOTES ─── -->
+  <div class="tab-pane" id="pane-notes">
+    <div class="notes-tab-inner">
+      <textarea class="notes-full" id="notes-full" placeholder="Stream notes, ideas, to-do list…&#10;&#10;Your notes are saved automatically in your browser."></textarea>
+      <div class="notes-actions">
+        <button class="notes-btn" onclick="clearNotes()">Clear</button>
+        <button class="notes-btn" onclick="copyNotes()">Copy all</button>
+        <button class="notes-btn primary" onclick="aiPolishNotes()">Polish Notes</button>
+      </div>
+      <div style="font-size:11px;color:var(--text3);margin-top:2px">Auto-saved · Ctrl+S to save manually</div>
+    </div>
+  </div>
+
+  <!-- BOTTOM BAR (always visible) -->
+  <div class="input-bar">
+    <div class="input-inner">
+      <span class="input-emoji"></span>
+      <input class="input-field" id="ask-input" placeholder="Ask StreamLine anything…" onkeydown="if(event.key==='Enter')sendAsk()"/>
+      <button class="send-btn" onclick="sendAsk()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+      </button>
+    </div>
+    <div class="bottom-actions">
+      <button class="ba-btn primary" id="analyze-btn" onclick="runAnalysis()" disabled>Analyze Chat</button>
+      <button class="ba-btn" onclick="quickAsk('boost')">Boost</button>
+      <button class="ba-btn" onclick="quickAsk('hype')">Hype</button>
+      <button class="ba-btn" onclick="quickAsk('poll')">Poll</button>
+      <button class="ba-btn" onclick="quickAsk('follow')">Follow CTA</button>
+    </div>
+    <div class="inject-row">
+      <input id="inject-input" placeholder="Paste test chat, one message per line"/>
+      <button onclick="injectChat()">Inject</button>
+    </div>
+  </div>
+
+</div>
+<!-- ══════ END MAIN PANEL ══════ -->
+
+</div>
+
+<!-- ══════ MODALS ══════ -->
+
+<!-- Coach View Modal -->
+<div class="modal-bg" id="modal-coach" onclick="if(event.target===this)closeModal('modal-coach')">
+  <div class="modal">
+    <h3>Coach View — Your Phone / Second Screen</h3>
+    <p>Open this on your phone or a second monitor. It syncs all AI alerts in real time via localStorage — keep the main tab open in the same browser.</p>
+    <div class="modal-url" id="coach-url">coach.html</div>
+    <div class="modal-actions">
+      <button class="mbtn" onclick="closeModal('modal-coach')">Close</button>
+      <button class="mbtn primary" onclick="copyCoachUrl()">Copy URL</button>
+      <button class="mbtn primary" onclick="openCoachTab()">Open →</button>
+    </div>
+  </div>
+</div>
+
+<!-- End Stream / Recap Modal -->
+<div class="modal-bg" id="modal-recap" onclick="if(event.target===this)closeModal('modal-recap')">
+  <div class="modal">
+    <h3>Stream Recap</h3>
+    <p>Here's your AI-generated session summary. Copy it to your notes or share it!</p>
+    <div class="recap-box" id="recap-box">Generating…</div>
+    <div class="modal-actions">
+      <button class="mbtn" onclick="closeModal('modal-recap')">Close</button>
+      <button class="mbtn primary" onclick="copyRecap()">Copy Recap</button>
+      <button class="mbtn primary" onclick="exportSession()">Export Session JSON</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-area" id="toast-area"></div>
+
+<!-- Settings Button & Overlay -->
+<button class="settings-toggle" id="settings-btn" onclick="toggleSettings()" title="Settings">⚙</button>
+<div class="settings-overlay" id="settings-overlay" onclick="if(event.target===this)closeSettings()"></div>
+<div class="settings-panel" id="settings-panel" style="display:none">
+  <button class="close-settings" onclick="closeSettings()">✕</button>
+  <h3>⚙ Settings</h3>
+
+  <!-- ── SIDEBAR PANELS ── -->
+  <div class="settings-section">
+    <div class="settings-section-title">Sidebar Panels</div>
+    <div class="settings-section-desc">Click any panel to show or hide it. Keep your sidebar clean.</div>
+    <div class="panel-grid" id="panel-grid">
+      <div class="panel-card on" data-panel="sc-livestats" onclick="togglePanel(this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>Live Stats
+      </div>
+      <div class="panel-card on" data-panel="sc-mood" onclick="togglePanel(this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>Chat Mood
+      </div>
+      <div class="panel-card on" data-panel="sc-goals" onclick="togglePanel(this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>Stream Goals
+      </div>
+      <div class="panel-card on" data-panel="sc-hotwords" onclick="togglePanel(this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>Hot Words
+      </div>
+      <div class="panel-card on" data-panel="sc-rq" onclick="togglePanel(this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3M12 17h.01"/></svg>Viewers Asking
+      </div>
+      <div class="panel-card on" data-panel="sc-clips" onclick="togglePanel(this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>Clip Log
+      </div>
+      <div class="panel-card on" data-panel="sc-persona" onclick="togglePanel(this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Streamer Context
+      </div>
+      <div class="panel-card on" data-panel="sc-watchlist" onclick="togglePanel(this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>AI Watchlist
+      </div>
+      <div class="panel-card on" data-panel="sc-connect" onclick="togglePanel(this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 6l6-3 6 3v12l-6 3-6-3z"/></svg>Connect
+      </div>
+      <div class="panel-card on" data-panel="sc-aicoach" onclick="togglePanel(this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93l-1.41 1.41M4.93 19.07l1.41-1.41M4.93 4.93l1.41 1.41M19.07 19.07l-1.41-1.41M1 12h2M21 12h2M12 1v2M12 21v2"/></svg>AI Coach
+      </div>
+    </div>
+    <div style="display:flex;gap:6px;margin-top:8px">
+      <button class="stt-btn" onclick="setPanelPreset('minimal')">Minimal</button>
+      <button class="stt-btn" onclick="setPanelPreset('standard')">Standard</button>
+      <button class="stt-btn" onclick="setPanelPreset('full')">Full</button>
+    </div>
+  </div>
+
+  <!-- ── AI ANALYSIS FEATURES ── -->
+  <div class="settings-section">
+    <div class="settings-section-title">AI Analysis</div>
+    <div class="settings-section-desc">Choose what the AI looks for and reports on each analysis cycle.</div>
+    <div class="stog-list">
+      <div class="stog-row"><div class="stog-info"><div class="stog-label">Chat Mood</div><div class="stog-desc">Hype / Positive / Negative breakdown after each analysis</div></div><label class="tog"><input type="checkbox" id="tog-mood" checked><span class="tog-sl"></span></label></div>
+      <div class="stog-row"><div class="stog-info"><div class="stog-label">Do / Avoid tips</div><div class="stog-desc">One actionable tip and one thing to stop doing</div></div><label class="tog"><input type="checkbox" id="tog-suggest" checked><span class="tog-sl"></span></label></div>
+      <div class="stog-row"><div class="stog-info"><div class="stog-label">Hot topic detection</div><div class="stog-desc">Surfaces the most-discussed word or topic in chat</div></div><label class="tog"><input type="checkbox" id="tog-hot" checked><span class="tog-sl"></span></label></div>
+      <div class="stog-row"><div class="stog-info"><div class="stog-label">Engagement drop alerts</div><div class="stog-desc">Warns you when chat interest is falling off</div></div><label class="tog"><input type="checkbox" id="tog-drop" checked><span class="tog-sl"></span></label></div>
+      <div class="stog-row"><div class="stog-info"><div class="stog-label">Clip-worthy detection</div><div class="stog-desc">Flags moments where chat went wild — check last 30s</div></div><label class="tog"><input type="checkbox" id="tog-clip" checked><span class="tog-sl"></span></label></div>
+      <div class="stog-row"><div class="stog-info"><div class="stog-label">Q&A queue</div><div class="stog-desc">Surfaces unanswered viewer questions</div></div><label class="tog"><input type="checkbox" id="tog-qa" checked><span class="tog-sl"></span></label></div>
+      <div class="stog-row"><div class="stog-info"><div class="stog-label">Shoutout queue</div><div class="stog-desc">Suggests new or notable viewers to shoutout</div></div><label class="tog"><input type="checkbox" id="tog-so" checked><span class="tog-sl"></span></label></div>
+    </div>
+    <div class="stog-row" style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
+      <div class="stog-info"><div class="stog-label">Auto-analyze every</div><div class="stog-desc">How often StreamLine automatically runs an analysis</div></div>
+      <select class="freq-sel" id="freq-sel" style="margin-left:8px">
+        <option value="30">30s</option>
+        <option value="60" selected>1 min</option>
+        <option value="120">2 min</option>
+        <option value="300">5 min</option>
+        <option value="0">Manual only</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- ── LIVE ALERTS ── -->
+  <div class="settings-section">
+    <div class="settings-section-title">Live Alerts</div>
+    <div class="settings-section-desc">Real-time event detection that runs on every chat message, not just analysis cycles.</div>
+    <div class="stog-list">
+      <div class="stog-row"><div class="stog-info"><div class="stog-label">Raid detection</div><div class="stog-desc">Alerts when ≥40% of recent traffic is new chatters (spike-based)</div></div><label class="tog"><input type="checkbox" id="tog-raid" checked><span class="tog-sl"></span></label></div>
+      <div class="stog-row"><div class="stog-info"><div class="stog-label">Chat activity spike</div><div class="stog-desc">Flags when msgs/min jumps 80%+ — potential clip moment</div></div><label class="tog"><input type="checkbox" id="tog-spike" checked><span class="tog-sl"></span></label></div>
+      <div class="stog-row"><div class="stog-info"><div class="stog-label">New viewer welcome</div><div class="stog-desc">Surfaces first-time chatters who mention they're new</div></div><label class="tog"><input type="checkbox" id="tog-newviewer" checked><span class="tog-sl"></span></label></div>
+      <div class="stog-row"><div class="stog-info"><div class="stog-label">Repeated question alerts</div><div class="stog-desc">Flags when 3+ viewers ask the same question</div></div><label class="tog"><input type="checkbox" id="tog-repq" checked><span class="tog-sl"></span></label></div>
+    </div>
+  </div>
+
+  <!-- ── SOUND & DISPLAY ── -->
+  <div class="settings-section">
+    <div class="settings-section-title">Sound & Display</div>
+    <div class="stog-list">
+      <div class="stog-row"><div class="stog-info"><div class="stog-label">Advanced panels</div><div class="stog-desc">Show coaching panels like goals, hot words, watchlist, clips, and AI settings</div></div><label class="tog"><input type="checkbox" id="toggle-advanced" checked onchange="toggleAdvancedMode()"><span class="tog-sl"></span></label></div>
+      <div class="stog-row"><div class="stog-info"><div class="stog-label">Sound alerts</div><div class="stog-desc">Audio ping on new AI alerts, raids, and clip moments</div></div><label class="tog"><input type="checkbox" id="tog-sound" checked><span class="tog-sl"></span></label></div>
+      <div class="stog-row"><div class="stog-info"><div class="stog-label">Smooth animations</div><div class="stog-desc">Fade and slide transitions throughout the UI</div></div><label class="tog"><input type="checkbox" id="toggle-animations" checked onchange="toggleAnimations()"><span class="tog-sl"></span></label></div>
+      <div class="stog-row"><div class="stog-info"><div class="stog-label">Show inject bar</div><div class="stog-desc">Paste-to-test chat input at the bottom of the screen</div></div><label class="tog"><input type="checkbox" id="tog-inject" checked onchange="toggleInjectBar()"><span class="tog-sl"></span></label></div>
+      <div class="stog-row"><div class="stog-info"><div class="stog-label">Show quick action buttons</div><div class="stog-desc">Boost / Hype / Poll / Follow CTA buttons below the ask bar</div></div><label class="tog"><input type="checkbox" id="tog-quickbtns" checked onchange="toggleQuickBtns()"><span class="tog-sl"></span></label></div>
+    </div>
+  </div>
+
+  <!-- ── AI PROVIDER ── -->
+  <div class="settings-section">
+    <div class="settings-section-title">AI Provider</div>
+    <div class="settings-section-desc">CometAPI (Gemini Flash) is the default — fast and cheap. Switch to Anthropic for Claude Sonnet quality. You can also type "use Claude" in the ask bar for a one-off switch.</div>
+    <div class="stog-list">
+      <div class="stog-row"><div class="stog-info"><div class="stog-label">Use Anthropic (Claude Sonnet)</div><div class="stog-desc">Routes all AI calls to claude-sonnet-4-6 via Anthropic API</div></div><label class="tog"><input type="checkbox" id="use-anthropic" onchange="toggleAntKey()"><span class="tog-sl"></span></label></div>
+    </div>
+    <div id="ant-key-wrap" style="display:none;margin-top:8px">
+      <label class="flabel">Anthropic API Key</label>
+      <input class="finput" id="ant-key" type="password" placeholder="sk-ant-api03-..." autocomplete="off"/>
+    </div>
+    <div class="small-note" id="ant-key-hint">CometAPI is used by default. Anthropic is only needed when Claude is enabled.</div>
+  </div>
+
+  <!-- ── PRESETS ── -->
+  <div class="settings-section">
+    <div class="settings-section-title">Presets</div>
+    <div class="settings-section-desc">Save your entire layout + AI settings as a named preset and restore any time.</div>
+    <div class="preset-list" id="preset-list"></div>
+    <div class="preset-save-row">
+      <input id="preset-name-input" placeholder="Preset name e.g. Gaming, Minimal…"/>
+      <button onclick="savePreset()">Save</button>
+    </div>
+  </div>
+
+  <div style="padding-top:12px;border-top:1px solid var(--border);display:flex;gap:7px">
+    <button class="notes-btn" style="flex:1" onclick="closeSettings()">Close</button>
+    <button class="notes-btn primary" style="flex:1" onclick="saveAll();closeSettings();toast('Settings saved ☕')">Save & Close</button>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════
+let platform = 'youtube';
+let connected = false;
+let donations = [];
+let donTotalAmount = 0;
+let donThankedCount = 0;
+let donBadgeCount = 0;
+let donId = 0;
+let watchlistItems = [];
+let presets = [];
+
+const STREAMLINE_ENV = (() => {
+  const sources = [
+    globalThis.STREAMLINE_ENV,
+    globalThis.__STREAMLINE_ENV__,
+    globalThis.process?.env
+  ].filter(Boolean);
+  const read = names => {
+    for (const source of sources) {
+      for (const name of names) {
+        const value = source[name];
+        if (typeof value === 'string' && value.trim()) return value.trim();
+      }
+    }
+    return '';
+  };
+  return {
+    youtubeApiKey: read(['YOUTUBE_API_KEY', 'YT_API_KEY', 'VITE_YOUTUBE_API_KEY', 'NEXT_PUBLIC_YOUTUBE_API_KEY']),
+    cometApiKey: read(['COMET_API_KEY', 'COMETAPI_KEY', 'VITE_COMET_API_KEY', 'NEXT_PUBLIC_COMET_API_KEY'])
+  };
+})();
+
+// Panel visibility state — true = visible
+const PANEL_IDS = ['sc-livestats','sc-mood','sc-goals','sc-hotwords','sc-rq','sc-clips','sc-persona','sc-watchlist','sc-connect','sc-aicoach'];
+let panelVisibility = {}; // id → bool
+PANEL_IDS.forEach(id => panelVisibility[id] = true);
+let chatMessages = [];      // { username, text, time, opts }
+let uniqueChatters = new Set();
+let msgTotal = 0;
+let msgMinute = 0;
+let msgLastMinute = [];     // timestamps for accurate rate
+let streamSecs = 0;
+let streamStart = null;
+let streamInterval = null;
+let analysisInterval = null;
+let ytPollInterval = null;
+let ytNextToken = '';
+let clipCount = 0;
+let goals = [];
+let qaQueue = [];           // { id, text, asker, asked, answered }
+let sessionEvents = [];     // full session log
+let wordFreq = {};          // word → count
+let questionCandidates = {};// phrase → count+askers
+let chatBadgeCount = 0;
+let qaBadgeCount = 0;
+let prevMsgRate = 0;
+let spikeCheckInterval = null;
+
+// ══════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════
+window.addEventListener('load', () => {
+  if ('Notification' in window) Notification.requestPermission();
+  loadAll();
+  setTimeout(() => {
+    addAIMsg('Welcome to StreamLine! ☕<br>Connect to your YouTube live stream on the left, add your CometAPI key, and I\'ll coach you in real time.<br>Use the ⚙ button to customize panels, set AI watchlist items, and save presets.');
+  }, 300);
+});
+
+document.addEventListener('keydown', e => {
+  if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); saveNotes(); toast('Notes saved'); }
+});
+
+// ══════════════════════════════════════════════
+// SETTINGS & ADVANCED MODE
+// ══════════════════════════════════════════════
+function toggleSettings() {
+  const overlay = document.getElementById('settings-overlay');
+  const panel = document.getElementById('settings-panel');
+  const btn = document.getElementById('settings-btn');
+  const isOpen = overlay.classList.contains('open');
+  
+  if (isOpen) {
+    closeSettings();
+  } else {
+    overlay.classList.add('open');
+    panel.style.display = 'block';
+    btn.classList.add('active');
+  }
+}
+
+function closeSettings() {
+  const overlay = document.getElementById('settings-overlay');
+  const panel = document.getElementById('settings-panel');
+  const btn = document.getElementById('settings-btn');
+  overlay.classList.remove('open');
+  panel.style.display = 'none';
+  btn.classList.remove('active');
+}
+
+function toggleInjectBar() {
+  const on = document.getElementById('tog-inject').checked;
+  const el = document.querySelector('.inject-row');
+  if (el) el.style.display = on ? 'flex' : 'none';
+  localStorage.setItem('sl_tog_inject', on);
+}
+function toggleQuickBtns() {
+  const on = document.getElementById('tog-quickbtns').checked;
+  const el = document.querySelector('.bottom-actions');
+  if (el) el.style.display = on ? 'flex' : 'none';
+  localStorage.setItem('sl_tog_quickbtns', on);
+}
+
+function toggleAnimations() {
+  const isEnabled = document.getElementById('toggle-animations').checked;
+  const root = document.documentElement;
+  
+  if (isEnabled) {
+    root.style.setProperty('--transition-speed', '0.3s');
+    localStorage.setItem('sl_animations', 'true');
+  } else {
+    root.style.setProperty('--transition-speed', '0s');
+    localStorage.setItem('sl_animations', 'false');
+  }
+}
+
+function toggleAdvancedMode() {
+  const isAdvanced = document.getElementById('toggle-advanced').checked;
+  document.body.classList.toggle('simple-mode', !isAdvanced);
+  localStorage.setItem('sl_advanced', isAdvanced ? 'true' : 'false');
+}
+
+// ══════════════════════════════════════════════
+// PERSISTENCE
+// ══════════════════════════════════════════════
+function saveAll() {
+  try {
+    localStorage.setItem('sl_goals', JSON.stringify(goals));
+    localStorage.setItem('sl_clips', JSON.stringify(sessionEvents.filter(e=>e.type==='clip')));
+    localStorage.setItem('sl_persona', document.getElementById('persona-input').value);
+    localStorage.setItem('sl_cometkey', document.getElementById('comet-key').value);
+    localStorage.setItem('sl_antkey', document.getElementById('ant-key').value);
+    localStorage.setItem('sl_animations', document.getElementById('toggle-animations').checked);
+    localStorage.setItem('sl_watchlist', JSON.stringify(watchlistItems));
+    localStorage.setItem('sl_panels', JSON.stringify(panelVisibility));
+    localStorage.setItem('sl_presets', JSON.stringify(presets));
+    localStorage.setItem('sl_donations', JSON.stringify(donations.slice(-100)));
+    // persist all feature toggles
+    ['mood','suggest','hot','drop','clip','qa','so','sound','raid','spike','newviewer','repq','inject','quickbtns'].forEach(k => {
+      const el = document.getElementById('tog-' + k);
+      if (el) localStorage.setItem('sl_tog_' + k, el.checked);
+    });
+  } catch(e) {}
+}
+function saveNotes() {
+  try { localStorage.setItem('sl_notes', document.getElementById('notes-full').value); } catch(e) {}
+}
+function loadAll() {
+  try {
+    goals = JSON.parse(localStorage.getItem('sl_goals') || '[]');
+    renderGoals();
+    document.getElementById('notes-full').value = localStorage.getItem('sl_notes') || '';
+    document.getElementById('persona-input').value = localStorage.getItem('sl_persona') || '';
+    document.getElementById('comet-key').value = localStorage.getItem('sl_cometkey') || '';
+    document.getElementById('ant-key').value = localStorage.getItem('sl_antkey') || '';
+    
+    // Load advanced mode setting
+    const advancedEnabled = localStorage.getItem('sl_advanced') !== 'false';
+    document.getElementById('toggle-advanced').checked = advancedEnabled;
+    toggleAdvancedMode();
+    
+    // Load animations setting
+    const animationsEnabled = localStorage.getItem('sl_animations') !== 'false';
+    document.getElementById('toggle-animations').checked = animationsEnabled;
+    if (!animationsEnabled) toggleAnimations();
+
+    // Load inject / quick buttons visibility
+    const injectOn = localStorage.getItem('sl_tog_inject') !== 'false';
+    document.getElementById('tog-inject').checked = injectOn;
+    toggleInjectBar();
+    const quickOn = localStorage.getItem('sl_tog_quickbtns') !== 'false';
+    document.getElementById('tog-quickbtns').checked = quickOn;
+    toggleQuickBtns();
+
+    // Load individual AI toggles from storage
+    ['mood','suggest','hot','drop','clip','qa','so','sound','raid','spike','newviewer','repq'].forEach(k => {
+      const stored = localStorage.getItem('sl_tog_' + k);
+      const el = document.getElementById('tog-' + k);
+      if (el && stored !== null) el.checked = stored !== 'false';
+    });
+
+    // Load watchlist
+    watchlistItems = JSON.parse(localStorage.getItem('sl_watchlist') || '[]');
+    renderWatchlist();
+
+    // Load presets
+    presets = JSON.parse(localStorage.getItem('sl_presets') || '[]');
+    renderPresets();
+
+    // Load panel visibility
+    const savedPanels = JSON.parse(localStorage.getItem('sl_panels') || 'null');
+    if (savedPanels) {
+      panelVisibility = { ...panelVisibility, ...savedPanels };
+    }
+    applyPanelVisibility();
+
+    // Load donations from this session
+    donations = JSON.parse(localStorage.getItem('sl_donations') || '[]');
+    donId = donations.length ? Math.max(...donations.map(d=>d.id)) : 0;
+    donTotalAmount = donations.reduce((s,d) => s + (d.amountNum||0), 0);
+    donThankedCount = donations.filter(d=>d.thanked).length;
+    renderDonations();
+    updateDonStats();
+  } catch(e) {}
+}
+document.getElementById('notes-full').addEventListener('input', saveNotes);
+document.getElementById('ant-key').addEventListener('change', () => saveAll());
+
+// ══════════════════════════════════════════════
+// TAB SWITCHING
+// ══════════════════════════════════════════════
+function switchTab(id, btn) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('pane-' + id).classList.add('active');
+  if (id === 'livechat') { chatBadgeCount = 0; updateBadge('chat-badge', 0); }
+  if (id === 'qa') { qaBadgeCount = 0; updateBadge('qa-badge', 0); }
+  if (id === 'donations') { donBadgeCount = 0; updateBadge('don-badge', 0); }
+}
+function updateBadge(id, n) {
+  const el = document.getElementById(id);
+  el.textContent = n > 99 ? '99+' : n;
+  el.classList.toggle('show', n > 0);
+}
+
+// ══════════════════════════════════════════════
+// PLATFORM
+// ══════════════════════════════════════════════
+
+// ══════════════════════════════════════════════
+// CONNECT / DISCONNECT
+// ══════════════════════════════════════════════
+function toggleConnect() {
+  if (connected) { doDisconnect(); } else { doConnect(); }
+}
+function doConnect() {
+  const cid = document.getElementById('yt-chatid').value.trim();
+  const key = document.getElementById('yt-apikey').value.trim() || STREAMLINE_ENV.youtubeApiKey;
+  if (!cid) { toast('Enter your Chat ID'); return; }
+  connectYouTube(cid, key);
+}
+
+function youtubeUrl(resource, params, apiKey) {
+  const query = new URLSearchParams(params);
+  if (apiKey) {
+    query.set('key', apiKey);
+    return `https://www.googleapis.com/youtube/v3/${resource}?${query.toString()}`;
+  }
+  return `/api/youtube/${resource}?${query.toString()}`;
+}
+
+// ── YOUTUBE polling with full debug ──
+function dbg(msg, type='info') {
+  const box = document.getElementById('yt-debug-log');
+  if (!box) return;
+  const icons = { info:'[i]', ok:'[ok]', err:'[err]', warn:'[!]', data:'[data]' };
+  const colors = { info:'var(--text2)', ok:'var(--green)', err:'var(--red)', warn:'var(--amber)', data:'var(--brown3)' };
+  const line = document.createElement('div');
+  line.style.cssText = `font-size:11px;padding:3px 0;border-bottom:1px solid var(--border);color:${colors[type]};font-family:monospace;word-break:break-all;line-height:1.5`;
+  line.innerHTML = `<span style="color:var(--text3);margin-right:5px">${new Date().toLocaleTimeString()}</span>${icons[type]} ${msg}`;
+  box.appendChild(line);
+  box.scrollTop = box.scrollHeight;
+  // also log to console
+  console.log(`[StreamLine YT] ${msg}`);
+}
+
+function clearDebug() {
+  const box = document.getElementById('yt-debug-log');
+  if (box) box.innerHTML = '';
+}
+
+async function connectYouTube(chatId, apiKey) {
+  setStatus('busy', 'Connecting to YouTube…');
+  clearDebug();
+  document.getElementById('yt-debug-panel').style.display = 'block';
+
+  // ── STEP 0: Input validation ──────────────────────────────
+  dbg('━━━ STEP 0 — Checking your inputs ━━━', 'info');
+  dbg(`Chat ID you entered: "${esc(chatId)}" — ${chatId.length} characters long`, 'data');
+  const usingServerEnv = !apiKey;
+  if (usingServerEnv) {
+    dbg('Using YouTube API key from server .env', 'data');
+  } else {
+    dbg(`API Key you entered: "${esc(apiKey.slice(0,8))}…${esc(apiKey.slice(-4))}" — ${apiKey.length} characters long`, 'data');
+  }
+
+  if (!chatId || chatId.trim().length === 0) {
+    dbg('❌ STOP: Chat ID is completely empty. Use the Chat ID Finder tool above.', 'err');
+    setStatus('err', 'Chat ID is empty'); return;
+  }
+  if (chatId.length < 20) {
+    dbg(`❌ STOP: Chat ID is only ${chatId.length} characters — real Chat IDs are 50+ characters. You may have only copied part of it.`, 'err');
+    setStatus('err', 'Chat ID too short'); return;
+  }
+  if (!usingServerEnv && apiKey.length < 30) {
+    dbg(`❌ STOP: API Key is only ${apiKey.length} characters — YouTube API keys are 39 characters starting with "AIza".`, 'err');
+    setStatus('err', 'API Key too short'); return;
+  }
+  if (!usingServerEnv && !apiKey.startsWith('AIza')) {
+    dbg(`⚠️ WARNING: Your key starts with "${esc(apiKey.slice(0,4))}" but YouTube keys always start with "AIza". Might be wrong key. Continuing…`, 'warn');
+  } else {
+    dbg('✅ Inputs look valid. Moving to network test…', 'ok');
+  }
+
+  // ── STEP 1: Network reachability with live countdown ──────
+  dbg('━━━ STEP 1 — Sending request to googleapis.com ━━━', 'info');
+
+  // Live countdown line that ticks every second
+  const box = document.getElementById('yt-debug-log');
+  const countLine = document.createElement('div');
+  countLine.style.cssText = 'font-size:11px;padding:3px 0;border-bottom:1px solid var(--border);color:var(--amber);font-family:monospace;line-height:1.5';
+  countLine.innerHTML = '⏳ Waiting for googleapis.com to respond… (0s)';
+  box.appendChild(countLine);
+
+  // Help button that appears at 3 seconds
+  const helpLine = document.createElement('div');
+  helpLine.style.cssText = 'padding:6px 0;display:none';
+  helpLine.innerHTML = `
+    <div style="background:#FFF3CD;border:1px solid var(--amber);border-radius:8px;padding:10px;font-size:11px;font-family:var(--font);color:var(--brown);line-height:1.7">
+      <strong>⚠️ Still waiting after 3 seconds — your browser is probably blocking the request.</strong><br>
+      The #1 cause is an <strong>ad blocker</strong> (uBlock Origin, AdGuard, etc.) silently blocking googleapis.com.<br><br>
+      <strong>Fix right now:</strong> Press <kbd style="background:var(--cream);border:1px solid var(--border2);border-radius:3px;padding:1px 5px;font-family:monospace">Ctrl+Shift+N</kbd> (Windows) or <kbd style="background:var(--cream);border:1px solid var(--border2);border-radius:3px;padding:1px 5px;font-family:monospace">Cmd+Shift+N</kbd> (Mac) to open an <strong>Incognito window</strong>, open this file there, and try again. Incognito disables all extensions.<br><br>
+      Other causes: VPN blocking Google APIs · Corporate/school network · File opened via file:// URL (use a local server instead).
+    </div>`;
+  box.appendChild(helpLine);
+  box.scrollTop = box.scrollHeight;
+
+  let elapsed = 0;
+  const ticker = setInterval(() => {
+    elapsed++;
+    countLine.innerHTML = `⏳ Waiting for googleapis.com to respond… (${elapsed}s)`;
+    if (elapsed === 3) {
+      helpLine.style.display = 'block';
+      box.scrollTop = box.scrollHeight;
+    }
+    if (elapsed === 10) {
+      countLine.innerHTML = `❌ No response after 10 seconds — request will be aborted now.`;
+      countLine.style.color = 'var(--red)';
+    }
+  }, 1000);
+
+  const ctrl = new AbortController();
+  const tid = setTimeout(() => ctrl.abort(), 10000);
+
+  try {
+    const pingUrl = youtubeUrl('videos', { part:'id', id:'dQw4w9WgXcQ' }, apiKey);
+    const pingRes = await fetch(pingUrl, { signal: ctrl.signal });
+    clearTimeout(tid);
+    clearInterval(ticker);
+    countLine.innerHTML = `✅ googleapis.com responded in ${elapsed}s — HTTP ${pingRes.status}`;
+    countLine.style.color = 'var(--green)';
+    helpLine.style.display = 'none';
+    box.scrollTop = box.scrollHeight;
+
+    const pingData = await pingRes.json();
+
+    if (pingData.error) {
+      const c = pingData.error.code, m = pingData.error.message, r = pingData.error.errors?.[0]?.reason || '';
+      dbg(`━━━ API KEY TEST RESULT: Error ${c} ━━━`, 'err');
+      dbg(`YouTube says: "${m}"`, 'err');
+      if (c === 400) {
+        dbg('❌ YOUR API KEY IS INVALID OR MALFORMED. Google looked at your key and couldn\'t recognize it. It might be corrupted, truncated, or have extra spaces. Go back to console.cloud.google.com → Credentials → copy the key fresh.', 'err');
+        setStatus('err', 'Invalid API key'); return;
+      }
+      if (c === 403 && r === 'accessNotConfigured') {
+        dbg('❌ YOUTUBE DATA API v3 IS NOT ENABLED. Your project has a key but hasn\'t turned on the YouTube API. Fix: console.cloud.google.com → your project → APIs & Services → + Enable APIs → search "YouTube Data API v3" → Enable.', 'err');
+        setStatus('err', 'YouTube API not enabled'); return;
+      }
+      if (c === 403 && r === 'quotaExceeded') {
+        dbg('❌ DAILY QUOTA EXCEEDED. You\'ve used all 10,000 free units today. Quota resets at midnight Pacific Time. Or create a new Google Cloud project with a fresh API key.', 'err');
+        setStatus('err', 'Quota exceeded'); return;
+      }
+      if (c === 403) {
+        dbg(`❌ API KEY IS RESTRICTED. Fix: console.cloud.google.com → Credentials → click your key → Application restrictions = "None" → API restrictions = "Don\'t restrict key" → Save. Reason: "${r}"`, 'err');
+        setStatus('err', 'API key restricted'); return;
+      }
+      if (c === 401) {
+        dbg('❌ API KEY AUTHENTICATION FAILED. This key may have been deleted. Create a new one at console.cloud.google.com → Credentials → + Create Credentials → API Key.', 'err');
+        setStatus('err', 'Auth failed'); return;
+      }
+      dbg(`⚠️ Unexpected error ${c} on key test. Trying live chat anyway…`, 'warn');
+    } else {
+      dbg('✅ API key is working. Fetching your live chat now…', 'ok');
+    }
+
+  } catch(e) {
+    clearTimeout(tid);
+    clearInterval(ticker);
+    countLine.style.color = 'var(--red)';
+
+    if (e.name === 'AbortError') {
+      countLine.innerHTML = '❌ Timed out after 10 seconds — request aborted.';
+      dbg('━━━ TIMED OUT ━━━', 'err');
+      dbg('Your browser never got a response from googleapis.com. 99% of the time this is an ad blocker. Open Incognito (Ctrl+Shift+N) and try there.', 'err');
+    } else {
+      countLine.innerHTML = '❌ Network error: ' + e.message;
+      dbg('━━━ NETWORK ERROR ━━━', 'err');
+      dbg(`Error: ${e.message}`, 'err');
+      dbg('If you see "file://" in your browser address bar, that\'s the problem — local files can\'t make API calls in some browsers. Run a local server: open Terminal, cd to this folder, run: python -m http.server 8080 — then open http://localhost:8080/streamline.html', 'warn');
+    }
+    setStatus('err', 'Blocked — see debug log');
+    return;
+  }
+
+  // ── STEP 2: Fetch live chat ──────────────────────────────
+  dbg('━━━ STEP 2 — Fetching your live chat ━━━', 'info');
+
+  const countLine2 = document.createElement('div');
+  countLine2.style.cssText = 'font-size:11px;padding:3px 0;border-bottom:1px solid var(--border);color:var(--amber);font-family:monospace;line-height:1.5';
+  countLine2.innerHTML = '⏳ Fetching chat messages… (0s)';
+  box.appendChild(countLine2);
+  box.scrollTop = box.scrollHeight;
+
+  let e2 = 0;
+  const ticker2 = setInterval(() => { e2++; countLine2.innerHTML = `⏳ Fetching chat messages… (${e2}s)`; }, 1000);
+
+  try {
+    const ctrl2 = new AbortController();
+    const tid2 = setTimeout(() => ctrl2.abort(), 10000);
+    const chatUrl = youtubeUrl('liveChat/messages', { liveChatId:chatId, part:'snippet,authorDetails' }, apiKey);
+    const res = await fetch(chatUrl, { signal: ctrl2.signal });
+    clearTimeout(tid2);
+    clearInterval(ticker2);
+    countLine2.innerHTML = `✅ Got response in ${e2}s — HTTP ${res.status}`;
+    countLine2.style.color = res.status === 200 ? 'var(--green)' : 'var(--red)';
+    box.scrollTop = box.scrollHeight;
+
+    let data;
+    try { data = await res.json(); }
+    catch(e) {
+      dbg(`❌ Response wasn\'t valid JSON (HTTP ${res.status}). A proxy or firewall is probably intercepting the response.`, 'err');
+      setStatus('err', 'Bad response'); return;
+    }
+
+    if (data.error) {
+      const code = data.error.code, msg = data.error.message, reason = data.error.errors?.[0]?.reason || '';
+      dbg(`━━━ ERROR ON LIVE CHAT REQUEST ━━━`, 'err');
+      dbg(`Error ${code}: "${msg}" — reason: "${reason}"`, 'err');
+      if (code === 404) {
+        dbg('❌ CHAT ID NOT FOUND. Your stream must be LIVE right now. If you\'re not streaming, there\'s no chat. If you are live, your Chat ID may be from a previous stream — use the Chat ID Finder above to get a fresh one.', 'err');
+      } else if (code === 403) {
+        dbg('❌ ACCESS DENIED on the chat. Your key works but this specific chat is blocked. The stream might be private or members-only.', 'err');
+      } else if (code === 400) {
+        dbg('❌ MALFORMED CHAT ID. Did you accidentally copy just part of the activeLiveChatId? It should be a long string with no spaces.', 'err');
+      }
+      setStatus('err', `YT ${code}: ${msg}`);
+      addAIMsg(`❌ <strong>YouTube Error ${code}:</strong> ${esc(msg)}<br>Check the Debug Log for the fix.`, 'warn');
+      return;
+    }
+
+    const count = data.items?.length || 0;
+    dbg('━━━ ✅ CONNECTED SUCCESSFULLY ━━━', 'ok');
+    dbg(`Got ${count} existing chat message${count!==1?'s':''}. Polling every 5 seconds for new ones.`, 'ok');
+    ytNextToken = data.nextPageToken || '';
+    onConnected('YouTube');
+    (data.items||[]).forEach(item => {
+      const u = item.authorDetails?.displayName || 'viewer';
+      const t = item.snippet?.displayMessage || '';
+      const isMod = item.authorDetails?.isChatModerator || false;
+      if (t) addChatMsg(u, t, { isMod });
+    });
+    ytPollInterval = setInterval(() => pollYouTube(chatId, apiKey), 5000);
+
+  } catch(e) {
+    clearInterval(ticker2);
+    countLine2.innerHTML = '❌ Step 2 failed: ' + e.message;
+    countLine2.style.color = 'var(--red)';
+    dbg('❌ STEP 2 FAILED: ' + e.message + ' — Step 1 worked so this is unusual. Try again, it may be a temporary YouTube hiccup.', 'err');
+    setStatus('err', 'Step 2 failed');
+  }
+}
+
+async function pollYouTube(chatId, apiKey) {
+  try {
+    const params = { liveChatId:chatId, part:'snippet,authorDetails' };
+    if (ytNextToken) params.pageToken = ytNextToken;
+    const url = youtubeUrl('liveChat/messages', params, apiKey);
+    const res = await fetch(url);
+    const data = await res.json();
+    if (data.error) {
+      dbg(`Poll error: ${data.error.code} — ${data.error.message}`, 'err');
+      if (data.error.code === 403 || data.error.code === 404) {
+        clearInterval(ytPollInterval);
+        setStatus('err', 'YT poll failed: ' + data.error.message);
+      }
+      return;
+    }
+    ytNextToken = data.nextPageToken || ytNextToken;
+    const newMsgs = data.items?.length || 0;
+    if (newMsgs > 0) dbg(`Poll: ${newMsgs} new message${newMsgs!==1?'s':''}`, 'ok');
+    (data.items || []).forEach(item => {
+      const u = item.authorDetails?.displayName || 'viewer';
+      const t = item.snippet?.displayMessage || '';
+      const isMod = item.authorDetails?.isChatModerator || false;
+      if (t) addChatMsg(u, t, { isMod });
+    });
+  } catch(e) {
+    dbg('Poll network error: ' + e.message, 'err');
+  }
+}
+
+// ── Shared ──
+function onConnected(name) {
+  connected = true;
+  streamStart = new Date();
+  setStatus('on', 'Connected · ' + name);
+  document.getElementById('live-badge').style.display = 'flex';
+  document.getElementById('stream-timer').style.display = 'inline';
+  document.getElementById('conn-btn').textContent = 'Disconnect';
+  document.getElementById('analyze-btn').disabled = false;
+  document.getElementById('end-stream-btn').style.display = 'inline-flex';
+
+  const feed = document.getElementById('chat-feed');
+  const es = feed.querySelector('.empty-state');
+  if (es) es.remove();
+
+  streamSecs = 0;
+  streamInterval = setInterval(() => {
+    streamSecs++;
+    const h = Math.floor(streamSecs/3600), m = Math.floor((streamSecs%3600)/60), s = streamSecs%60;
+    document.getElementById('stream-timer').textContent = (h?h+':':'') + String(m).padStart(h?2:1,'0') + ':' + String(s).padStart(2,'0');
+  }, 1000);
+
+  // msg rate tracking
+  setInterval(() => {
+    const now = Date.now();
+    msgLastMinute = msgLastMinute.filter(t => now - t < 60000);
+    const rate = msgLastMinute.length;
+    document.getElementById('stat-rate').textContent = rate;
+    document.getElementById('cs-rate').textContent = rate;
+    // spike detection
+    if (rate > prevMsgRate * 1.8 && rate > 8 && document.getElementById('tog-clip').checked && document.getElementById('tog-spike').checked) {
+      const card = { type:'clip', title:'Chat spike!', body:`Chat activity jumped to ${rate} msgs/min — possible clip-worthy moment!`, time: tn() };
+      addAIMsg(`🎬 <strong>Clip-worthy moment!</strong><br>Chat went wild — <strong>${rate} msgs/min</strong>! Check the last 30 seconds!`, 'clip');
+      addClipEntry('Chat spike · ' + rate + ' msgs/min');
+      pushCoachCard(card);
+      playAlert(880);
+    }
+    prevMsgRate = rate;
+  }, 10000);
+
+  const freq = parseInt(document.getElementById('freq-sel').value);
+  if (freq > 0) analysisInterval = setInterval(runAnalysis, freq * 1000);
+
+  logEvent({ type:'connect', name, time: new Date().toISOString() });
+  toast('Connected to ' + name);
+}
+
+function doDisconnect() {
+  if (ytPollInterval) { clearInterval(ytPollInterval); ytPollInterval = null; }
+  if (streamInterval) { clearInterval(streamInterval); streamInterval = null; }
+  if (analysisInterval) { clearInterval(analysisInterval); analysisInterval = null; }
+  connected = false;
+  document.getElementById('live-badge').style.display = 'none';
+  document.getElementById('stream-timer').style.display = 'none';
+  document.getElementById('conn-btn').textContent = 'Connect to Chat';
+  document.getElementById('analyze-btn').disabled = true;
+  document.getElementById('end-stream-btn').style.display = 'none';
+  setStatus('idle', 'Not connected');
+  toast('Disconnected');
+}
+
+function setStatus(state, text) {
+  const dot = document.getElementById('sdot');
+  dot.className = 'sdot' + (state==='on' ? ' on' : state==='err' ? ' err' : state==='busy' ? ' busy' : '');
+  document.getElementById('status-text').textContent = text;
+}
+
+// ══════════════════════════════════════════════
+// CHAT MESSAGES
+// ══════════════════════════════════════════════
+function addChatMsg(username, text, opts={}) {
+  const msg = { username, text, time: new Date(), opts };
+  chatMessages.push(msg);
+  if (chatMessages.length > 600) chatMessages.shift();
+  msgTotal++;
+  msgLastMinute.push(Date.now());
+  uniqueChatters.add(username.toLowerCase());
+
+  document.getElementById('stat-viewers').textContent = uniqueChatters.size.toLocaleString();
+  document.getElementById('stat-total').textContent = msgTotal.toLocaleString();
+  document.getElementById('cs-msgs').textContent = msgTotal;
+  document.getElementById('cs-chatters').textContent = uniqueChatters.size;
+
+  // track first appearance → new chatter
+  const isNew = !seenBeforeThisSession(username.toLowerCase());
+  markSeenThisSession(username.toLowerCase());
+
+  renderChatLine(msg, isNew);
+  analyzeWords(text);
+  detectQuestion(username, text);
+  logEvent({ type:'chat', username, text, time: new Date().toISOString(), isNew });
+
+  // raid detection — only fires on a significant % spike in new chatters
+  if (isNew) {
+    if (document.getElementById('tog-raid').checked) checkRaid();
+    // new viewer keyword detection
+    if (document.getElementById('tog-newviewer').checked) {
+      const isKeywordNew = /first time|just found|new here|found your/.test(text.toLowerCase());
+      if (isKeywordNew) {
+        addAIMsg(`👋 <strong>New viewer:</strong> @${esc(username)} — "${esc(text)}"`, 'info');
+      }
+    }
+  }
+}
+
+let seenThisSession = new Set();
+function seenBeforeThisSession(u) { return seenThisSession.has(u); }
+function markSeenThisSession(u) { seenThisSession.add(u); }
+
+// Raid detection: track new-chatter % over rolling 30s windows.
+// Only fires when new chatters jump to ≥40% of recent traffic AND
+// at least 10 new chatters arrived in the last 30s — cooldown 2 min.
+let raidWindow = [];        // timestamps of new-chatter arrivals
+let msgWindow = [];         // timestamps of ALL messages (already tracked in msgLastMinute but we need 30s)
+let lastRaidAlert = 0;      // epoch ms of last raid alert
+const RAID_COOLDOWN = 120000;   // 2 minutes between alerts
+const RAID_WINDOW_MS = 30000;   // 30-second rolling window
+const RAID_MIN_NEW = 10;        // minimum new chatters in window
+const RAID_PCT_THRESHOLD = 40;  // new chatters must be ≥40% of recent msgs
+
+function checkRaid() {
+  const now = Date.now();
+  raidWindow.push(now);
+
+  // prune both windows to last 30s
+  raidWindow = raidWindow.filter(t => now - t < RAID_WINDOW_MS);
+  const recentMsgs = msgLastMinute.filter(t => now - t < RAID_WINDOW_MS);
+
+  const newCount = raidWindow.length;
+  const totalCount = recentMsgs.length;
+  const pct = totalCount > 0 ? Math.round((newCount / totalCount) * 100) : 0;
+
+  // must exceed both thresholds and respect cooldown
+  if (
+    newCount >= RAID_MIN_NEW &&
+    pct >= RAID_PCT_THRESHOLD &&
+    now - lastRaidAlert > RAID_COOLDOWN
+  ) {
+    lastRaidAlert = now;
+    raidWindow = []; // reset so it doesn't re-fire immediately
+    addAIMsg(
+      `👋 <strong>Raid incoming!</strong><br>${newCount} new viewers arrived in the last 30 seconds (${pct}% of recent traffic). Give them a warm welcome!`,
+      'info'
+    );
+    pushCoachCard({ type:'raid', title:'Raid incoming!', body:`${newCount} new chatters — ${pct}% of recent traffic`, time:tn() });
+    playAlert(660);
+    toast(`Raid! ${newCount} new viewers (${pct}% spike) 👋`);
+  }
+}
+
+function renderChatLine(msg, isNew) {
+  const feed = document.getElementById('chat-feed');
+  const el = document.createElement('div');
+  el.className = 'chat-line';
+  const init = msg.username.slice(0,2).toUpperCase();
+  const avCls = msg.opts.isMod ? 'chat-av mod' : isNew ? 'chat-av new' : msg.opts.isSub ? 'chat-av sub' : 'chat-av';
+  const userCls = msg.opts.isMod ? 'chat-user mod' : isNew ? 'chat-user new' : msg.opts.isSub ? 'chat-user sub' : 'chat-user';
+  const badge = msg.opts.isMod ? '<span class="chat-badge badge-mod">MOD</span>'
+    : isNew ? '<span class="chat-badge badge-new">NEW</span>'
+    : msg.opts.isSub ? '<span class="chat-badge badge-sub">SUB</span>' : '';
+  el.innerHTML = `<div class="${avCls}">${init}</div><div class="chat-content"><span class="${userCls}">@${esc(msg.username)}</span>${badge}<span class="chat-msg-text">${esc(msg.text)}</span><span class="chat-ts">${tn()}</span></div>`;
+  feed.appendChild(el);
+  if (feed.children.length > 150) feed.removeChild(feed.firstChild);
+  feed.scrollTop = feed.scrollHeight;
+
+  // increment badge if not on livechat tab
+  if (!document.getElementById('pane-livechat').classList.contains('active')) {
+    chatBadgeCount++;
+    updateBadge('chat-badge', chatBadgeCount);
+  }
+}
+
+// ══════════════════════════════════════════════
+// WORD FREQUENCY (hot words)
+// ══════════════════════════════════════════════
+const STOP = new Set(['the','a','an','and','or','but','in','on','at','to','for','of','with','is','it','this','that','i','you','we','they','he','she','im','its','my','your','lol','haha','omg','yes','no','oh','so','do','be','are','was','not','can','get','just','like','what','how','have','has','go','got','did','me','him','her','us','by','from','up','out','if','then','wow','ok','okay','hi','hey','hello','np','ty','thx','gg','lmao','kek','pog','poggers','nice']);
+function analyzeWords(text) {
+  text.toLowerCase().replace(/[^a-z0-9'\s]/g,' ').split(/\s+/).forEach(w => {
+    if (w.length < 3 || STOP.has(w)) return;
+    wordFreq[w] = (wordFreq[w] || 0) + 1;
+  });
+  renderHotWords();
+}
+function renderHotWords() {
+  const sorted = Object.entries(wordFreq).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  if (!sorted.length) return;
+  const max = sorted[0][1];
+  document.getElementById('hot-words').innerHTML = sorted.map(([w,c],i) => {
+    const cls = i===0?'hw-tag hot1':i===1?'hw-tag hot2':i===2?'hw-tag hot3':'hw-tag';
+    return `<span class="${cls}">${esc(w)} <small>${c}</small></span>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════════════
+// QUESTION DETECTION
+// ══════════════════════════════════════════════
+function detectQuestion(username, text) {
+  if (!document.getElementById('tog-qa').checked && !document.getElementById('tog-repq').checked) return;
+  const isQ = /\?/.test(text) || /^(what|how|why|when|where|who|which|can you|do you|will you|could you|should i|is it|are you|does it|did you)/i.test(text.trim());
+  if (!isQ) return;
+
+  // normalize
+  const key = text.toLowerCase().replace(/[^a-z0-9\s]/g,' ').trim().slice(0,60);
+  if (!questionCandidates[key]) {
+    questionCandidates[key] = { count:0, askers:[], text, orig:text };
+  }
+  questionCandidates[key].count++;
+  if (!questionCandidates[key].askers.includes(username)) questionCandidates[key].askers.push(username);
+
+  // repeated question threshold
+  if (questionCandidates[key].count >= 3 && questionCandidates[key].count % 3 === 0) {
+    const q = questionCandidates[key];
+    addAIMsg(`Question: <strong>${q.count} viewers are asking:</strong><br><strong>"${esc(q.orig)}"</strong>`, 'info');
+    addRQItem(q.orig, q.count, q.askers);
+    addToQAQueue(q.orig, q.askers[0]);
+    pushCoachCard({ type:'shoutout', title:`${q.count} viewers asking`, body:q.orig, time:tn() });
+    playAlert(528);
+  }
+}
+
+// ──────────────────────────────────────────────
+// REPEATED Q in sidebar
+function addRQItem(text, count, askers) {
+  const list = document.getElementById('rq-list');
+  if (list.querySelector('span')) list.innerHTML = '';
+  const el = document.createElement('div');
+  el.className = 'rq-item';
+  el.title = 'Click to copy';
+  el.innerHTML = `<div class="rq-count">${count} viewers asking:</div>"${esc(text)}"`;
+  el.onclick = () => { navigator.clipboard.writeText(text).catch(()=>{}); toast('Question copied!'); };
+  list.prepend(el);
+  if (list.children.length > 8) list.removeChild(list.lastChild);
+}
+function clearRQ() { document.getElementById('rq-list').innerHTML = '<span style="font-size:11px;color:var(--text3)">Cleared.</span>'; }
+
+// ──────────────────────────────────────────────
+// Q&A QUEUE TAB
+let qaId = 0;
+function addToQAQueue(text, asker) {
+  const item = { id: ++qaId, text, asker, time:tn(), answered:false };
+  qaQueue.unshift(item);
+  renderQAQueue();
+  qaBadgeCount++;
+  updateBadge('qa-badge', qaBadgeCount);
+}
+function renderQAQueue() {
+  const feed = document.getElementById('qa-feed');
+  const es = feed.querySelector('.empty-state');
+  if (es) es.remove();
+  // rebuild
+  feed.innerHTML = '';
+  qaQueue.slice(0,20).forEach(item => {
+    const el = document.createElement('div');
+    el.className = 'qa-item';
+    el.innerHTML = `
+      <div class="qa-badge${item.answered?' ans':''}">Q${item.id}</div>
+      <div class="qa-content">
+        <div class="qa-q">${esc(item.text)}</div>
+        <div class="qa-from">from @${esc(item.asker)} · ${item.time}</div>
+        <div class="qa-btns">
+          <button class="qa-btn-sm" onclick="answerWithAI(${item.id})">Draft answer</button>
+          <button class="qa-btn-sm" onclick="copyQ(${item.id})">Copy</button>
+          <button class="qa-btn-sm mark${item.answered?' ':''}${item.answered?'':''}" onclick="markAnswered(${item.id})">${item.answered?'✓ Answered':'Mark answered'}</button>
+        </div>
+      </div>`;
+    feed.appendChild(el);
+  });
+  if (!feed.children.length) feed.innerHTML = '<div class="empty-state"><span class="empty-cup">?</span>No questions yet.</div>';
+}
+function markAnswered(id) {
+  const item = qaQueue.find(q=>q.id===id);
+  if (item) { item.answered = true; renderQAQueue(); toast('Marked answered'); }
+}
+function copyQ(id) {
+  const item = qaQueue.find(q=>q.id===id);
+  if (item) { navigator.clipboard.writeText(item.text).catch(()=>{}); toast('Question copied!'); }
+}
+async function answerWithAI(id) {
+  const item = qaQueue.find(q=>q.id===id);
+  if (!item) return;
+  const { cometKey, antKey } = getAIConfig();
+  if (!cometKey && !antKey) { toast('Add CometAPI key first'); return; }
+  switchTab('coach', document.querySelectorAll('.tab')[0]);
+  const persona = document.getElementById('persona-input').value.trim();
+  const thinkEl = addAIMsg(`<span class="spin">•</span> Drafting answer for: "<em>${esc(item.text)}</em>"...`);
+  try {
+    const res = await callAI(
+      `${persona ? 'Streamer context: ' + persona + '\n\n' : ''}A viewer named @${item.asker} asked: "${item.text}"\n\nWrite a friendly, concise on-stream answer the streamer can read aloud. Max 60 words. Sound natural and conversational.`);
+    thinkEl.querySelector('.msg-text').innerHTML = `Answer for @${esc(item.asker)}: "${esc(item.text)}"<br><br>${res.replace(/\n/g,'<br>')}
+      <div class="msg-actions"><button class="msg-act-btn" onclick="navigator.clipboard.writeText(\`${res.replace(/`/g,"'")}\`).catch(()=>{});toast('Copied!')">Copy answer</button><button class="msg-act-btn" onclick="markAnswered(${id})\">Mark answered</button></div>`;
+    thinkEl.querySelector('.msg-time').textContent = tn();
+  } catch(e) { thinkEl.querySelector('.msg-text').textContent = 'Error: ' + e.message; }
+}
+
+// ══════════════════════════════════════════════
+// GOALS
+// ══════════════════════════════════════════════
+function addGoal() {
+  const name = document.getElementById('goal-name').value.trim();
+  const target = parseInt(document.getElementById('goal-target').value);
+  if (!name || !target) { toast('Enter goal name and target'); return; }
+  goals.push({ id: Date.now(), name, target, current:0 });
+  document.getElementById('goal-name').value = '';
+  document.getElementById('goal-target').value = '';
+  renderGoals();
+  saveAll();
+}
+function clearGoals() { goals = []; renderGoals(); saveAll(); }
+function renderGoals() {
+  const list = document.getElementById('goals-list');
+  if (!goals.length) { list.innerHTML = '<div style="font-size:11px;color:var(--text3)">No goals yet.</div>'; return; }
+  list.innerHTML = goals.map(g => {
+    const pct = Math.min(100, Math.round(g.current/g.target*100));
+    return `<div class="goal-item">
+      <div class="goal-top"><span class="goal-name">${esc(g.name)}</span><span class="goal-num">${g.current.toLocaleString()} / ${g.target.toLocaleString()}</span></div>
+      <div class="goal-track"><div class="goal-fill${pct>=100?' done':''}" style="width:${pct}%"></div></div>
+    </div>`;
+  }).join('');
+}
+function updateGoal(name, delta) {
+  const g = goals.find(x => x.name.toLowerCase().includes(name.toLowerCase()));
+  if (!g) return;
+  g.current = Math.max(0, g.current + delta);
+  if (g.current >= g.target) {
+    addAIMsg(`🎯 <strong>Goal reached!</strong> ${esc(g.name)}: ${g.current.toLocaleString()} / ${g.target.toLocaleString()} ✓`, 'good');
+    playAlert(880);
+  }
+  renderGoals(); saveAll();
+}
+
+// ══════════════════════════════════════════════
+// CLIP MOMENTS
+// ══════════════════════════════════════════════
+function addClipNow() {
+  const label = 'Manual clip @ ' + formatStreamTime();
+  addClipEntry(label);
+  addAIMsg(`🎬 <strong>Clip marked!</strong> ${esc(label)}`, 'clip');
+  playAlert(660);
+  toast('Clip saved! 🎬');
+}
+function addClipEntry(note) {
+  clipCount++;
+  document.getElementById('stat-clips').textContent = clipCount;
+  const entry = { type:'clip', note, streamTime: formatStreamTime(), wallTime: tn(), ts: Date.now() };
+  logEvent(entry);
+  renderClips();
+  saveAll();
+}
+function renderClips() {
+  const clips = sessionEvents.filter(e => e.type === 'clip').slice(-10).reverse();
+  const list = document.getElementById('clip-list');
+  if (!clips.length) { list.innerHTML = '<span style="font-size:11px;color:var(--text3)">No clips yet.</span>'; return; }
+  list.innerHTML = clips.map((c,i) => `
+    <div class="clip-item">
+      <span class="clip-ts">${c.streamTime}</span>
+      <span class="clip-note" title="${esc(c.note)}">${esc(c.note)}</span>
+      <button class="clip-copy" onclick="navigator.clipboard.writeText('${escAttr(c.streamTime + ' — ' + c.note)}').catch(()=>{});toast('Copied!')" title="Copy"></button>
+    </div>`).join('');
+}
+function exportClips() {
+  const clips = sessionEvents.filter(e => e.type === 'clip');
+  if (!clips.length) { toast('No clips to export'); return; }
+  const txt = clips.map(c => `[${c.streamTime}] ${c.note}`).join('\n');
+  navigator.clipboard.writeText(txt).catch(()=>{});
+  toast('All clip timestamps copied!');
+}
+
+// ══════════════════════════════════════════════
+// PERSONA
+// ══════════════════════════════════════════════
+function toggleAntKey() {
+  const on = document.getElementById('use-anthropic').checked;
+  document.getElementById('ant-key-wrap').style.display = on ? 'block' : 'none';
+  document.getElementById('ant-key-hint').style.display = on ? 'none' : 'block';
+}
+function savePersona() { saveAll(); toast('Streamer context saved'); }
+
+// ══════════════════════════════════════════════
+// NOTES
+// ══════════════════════════════════════════════
+function clearNotes() { if(confirm('Clear all notes?')){ document.getElementById('notes-full').value=''; saveNotes(); } }
+function copyNotes() { navigator.clipboard.writeText(document.getElementById('notes-full').value).catch(()=>{}); toast('Notes copied!'); }
+async function aiPolishNotes() {
+  const notes = document.getElementById('notes-full').value.trim();
+  if (!notes) { toast('Notes are empty'); return; }
+  const { cometKey, antKey } = getAIConfig();
+  if (!cometKey && !antKey) { toast('Add CometAPI key first'); return; }
+  toast('Polishing notes…');
+  try {
+    const result = await callAI(`Clean up and organize these stream notes into clear, structured bullets. Keep all the information, just make it more readable:\n\n${notes}`);
+    document.getElementById('notes-full').value = result;
+    saveNotes();
+    toast('Notes polished! ✨');
+  } catch(e) { toast('Error: ' + e.message); }
+}
+
+// ══════════════════════════════════════════════
+// AI COACH MESSAGES
+// ══════════════════════════════════════════════
+function addAIMsg(html, variant='') {
+  const feed = document.getElementById('msg-feed');
+  const es = feed.querySelector('.empty-state');
+  if (es) es.remove();
+  const wrap = document.createElement('div');
+  wrap.className = 'msg-wrap';
+  const cls = {good:'msg-bubble good',warn:'msg-bubble warn',info:'msg-bubble info',clip:'msg-bubble clip'}[variant] || 'msg-bubble';
+  wrap.innerHTML = `<div class="cup-av">${cupSVG()}</div><div class="${cls}"><div class="msg-text">${html}</div><div class="msg-time">${tn()}</div></div>`;
+  feed.appendChild(wrap);
+  feed.scrollTop = feed.scrollHeight;
+  // switch to coach tab if not already
+  if (!document.getElementById('pane-coach').classList.contains('active')) {
+    // subtle notification without forcibly switching
+  }
+  return wrap;
+}
+
+function cupSVG() {
+  return `<svg viewBox="0 0 40 40" fill="none"><path d="M8 11 Q9.5 8 8 6" stroke="#9B7355" stroke-width="1.3" stroke-linecap="round" fill="none"/><path d="M13 10 Q14.5 7 13 5" stroke="#9B7355" stroke-width="1.3" stroke-linecap="round" fill="none"/><path d="M18 11 Q19.5 8 18 6" stroke="#9B7355" stroke-width="1.3" stroke-linecap="round" fill="none"/><path d="M4 13 H28 L26 28 Q25.5 30 23.5 30 H8.5 Q6.5 30 6 28Z" fill="#3D2B1F"/><ellipse cx="16" cy="14" rx="12" ry="2.5" fill="#5C3D2A"/><ellipse cx="16" cy="14" rx="10" ry="1.8" fill="#7A4E32"/><path d="M28 18 Q35 18 35 22 Q35 26 28 26" stroke="#3D2B1F" stroke-width="2.2" fill="none" stroke-linecap="round"/><ellipse cx="16" cy="31" rx="13" ry="2.5" fill="#2C1A0E" opacity=".4"/></svg>`;
+}
+
+// ══════════════════════════════════════════════
+// ASK ANYTHING
+// ══════════════════════════════════════════════
+async function sendAsk() {
+  const input = document.getElementById('ask-input');
+  const text = input.value.trim();
+  if (!text) return;
+  input.value = '';
+  const feed = document.getElementById('msg-feed');
+  const es = feed.querySelector('.empty-state');
+  if (es) es.remove();
+  // switch to coach tab
+  const coachTab = document.querySelectorAll('.tab')[0];
+  switchTab('coach', coachTab);
+
+  const userEl = document.createElement('div');
+  userEl.style.cssText = 'display:flex;justify-content:flex-end;animation:fadeUp .3s ease';
+  userEl.innerHTML = `<div style="background:var(--brown);color:#fff;border-radius:12px 12px 0 12px;padding:10px 13px;max-width:70%;font-size:13px;line-height:1.55">${esc(text)}<div style="font-size:10px;opacity:.55;text-align:right;margin-top:3px">${tn()}</div></div>`;
+  feed.appendChild(userEl);
+  feed.scrollTop = feed.scrollHeight;
+
+  const { cometKey, antKey, useAnt } = getAIConfig();
+  if (!cometKey && !antKey) { addAIMsg('Add your CometAPI key in the AI Coach section on the left! Get one free at cometapi.com', 'warn'); return; }
+  const thinkEl = addAIMsg('<span class="spin">•</span> Thinking...');
+
+  const persona = document.getElementById('persona-input').value.trim();
+  const context = chatMessages.length > 0
+    ? '\n\nRecent chat (last 20):\n' + chatMessages.slice(-20).map(m=>`${m.username}: ${m.text}`).join('\n')
+    : '';
+
+  // detect if user explicitly wants Anthropic/Claude for this message
+  const wantsAnthropic = /\b(anthropic|claude|use claude|use anthropic|sonnet|with claude|with anthropic)\b/i.test(text);
+  if (wantsAnthropic) {
+    addAIMsg('🔀 Switching to <strong>Claude Sonnet</strong> (Anthropic) for this response…', 'info');
+  }
+
+  const system = `You are StreamLine, a warm, practical AI assistant for live streamers. ${persona ? 'Streamer context: ' + persona : ''} Give concise, actionable coaching. Keep replies under 120 words. Plain conversational text, no markdown headers.`;
+
+  try {
+    const reply = await callAI(text + context, system, wantsAnthropic);
+    thinkEl.querySelector('.msg-text').innerHTML = reply.replace(/\n/g,'<br>');
+    thinkEl.querySelector('.msg-time').textContent = tn();
+  } catch(e) {
+    thinkEl.querySelector('.msg-text').innerHTML = '⚠️ Error: ' + esc(e.message);
+  }
+  feed.scrollTop = feed.scrollHeight;
+}
+
+// ══════════════════════════════════════════════
+// QUICK PROMPTS
+// ══════════════════════════════════════════════
+async function quickAsk(type) {
+  const prompts = {
+    boost: 'Give me ONE very specific, immediately actionable thing to say or do right now to boost viewer engagement. Be concrete.',
+    hype: 'My stream energy is dropping. Give me 3 quick high-energy things I can do or say in the next 2 minutes to re-engage my audience.',
+    poll: 'Give me a fun, interactive poll question or challenge I can run with my live chat right now. Keep it short.',
+    follow: 'Write me a 30-second follow/subscribe CTA I can say on stream — natural, fun, not cringe. Under 55 words.'
+  };
+  document.getElementById('ask-input').value = prompts[type];
+  await sendAsk();
+}
+
+// ══════════════════════════════════════════════
+// INJECT CHAT (paste / test mode)
+// ══════════════════════════════════════════════
+function injectChat() {
+  const raw = document.getElementById('inject-input').value.trim();
+  if (!raw) return;
+  const feed = document.getElementById('chat-feed');
+  const es = feed.querySelector('.empty-state');
+  if (es) es.remove();
+  let count = 0;
+  raw.split('\n').forEach(line => {
+    const m = line.match(/^([^:]+):\s*(.+)/);
+    if (m) { addChatMsg(m[1].trim(), m[2].trim(), {}); count++; }
+    else if (line.trim()) { addChatMsg('viewer', line.trim(), {}); count++; }
+  });
+  document.getElementById('inject-input').value = '';
+  if (!connected) {
+    connected = true;
+    document.getElementById('analyze-btn').disabled = false;
+    if (!streamStart) { streamStart = new Date(); }
+  }
+  toast(count + ' message' + (count!==1?'s':'') + ' injected — click Analyze Chat!');
+}
+
+// ══════════════════════════════════════════════
+// AI ANALYSIS
+// ══════════════════════════════════════════════
+async function runAnalysis() {
+  const { cometKey, antKey, useAnt } = getAIConfig();
+  if (!cometKey && !antKey) { toast('Add your CometAPI key first'); return; }
+  if (chatMessages.length === 0) { toast('No chat messages to analyze'); return; }
+
+  const btn = document.getElementById('analyze-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin">•</span> Analyzing...';
+
+  const recentMsgs = chatMessages.slice(-60).map(m=>`${m.username}: ${m.text}`).join('\n');
+  const persona = document.getElementById('persona-input').value.trim();
+  const tog = {
+    mood: document.getElementById('tog-mood').checked,
+    suggest: document.getElementById('tog-suggest').checked,
+    hot: document.getElementById('tog-hot').checked,
+    drop: document.getElementById('tog-drop').checked,
+    clip: document.getElementById('tog-clip').checked,
+    qa: document.getElementById('tog-qa').checked,
+    so: document.getElementById('tog-so').checked,
+  };
+
+  const watchlistAddition = getWatchlistPromptAddition();
+  const prompt = `You are StreamLine AI, an expert live stream coach. ${persona ? 'Streamer context: ' + persona + '\n\n' : ''}Analyze the last ${Math.min(chatMessages.length,60)} chat messages and return ONE JSON object.${watchlistAddition}
+
+Only include fields whose toggle is true:
+mood=${tog.mood}, do_dont=${tog.suggest}, hot_topic=${tog.hot}, engagement_alert=${tog.drop}, clip_moment=${tog.clip}, unanswered_question=${tog.qa}, shoutout_queue=${tog.so}
+
+Schema (only include enabled fields, all others omit entirely):
+{
+  "mood": { "label": "one of: Hype 🔥 | Chill 😌 | Curious 🤔 | Bored 😐 | Frustrated 😤 | Hype Train 🚂", "hype": <0-100>, "positive": <0-100>, "negative": <0-100>, "summary": "<1 sentence vibe>" },
+  "do": "<1 specific actionable thing to do RIGHT NOW on stream>",
+  "dont": "<1 specific thing actively hurting the stream right now>",
+  "hot_topic": "<most discussed topic/word, or null>",
+  "engagement_alert": "<1-sentence warning if chat interest is dropping, or null>",
+  "clip_moment": "<if something clip-worthy just happened in chat describe it in 10 words, or null>",
+  "unanswered_question": "<the single most important unanswered viewer question, or null>",
+  "shoutout_queue": ["<up to 3 new/notable usernames deserving a shoutout>"],
+  "watchlist_alert": "<if any watchlist items were detected in chat, describe what happened in 1 sentence, or null>"
+}
+
+Return ONLY valid JSON. No markdown fences. No explanation.
+
+Chat messages:
+${recentMsgs}`;
+
+  try {
+    const text = await callAI(prompt);
+    const json = JSON.parse(text.replace(/```json|```/g,'').trim());
+    processAnalysis(json);
+  } catch(e) {
+    toast('Analysis error: ' + e.message);
+    console.error('Analysis error:', e);
+  }
+  btn.disabled = false;
+  btn.innerHTML = 'Analyze Chat';
+}
+
+function processAnalysis(json) {
+  const store = loadCoach();
+  store.cards = store.cards || [];
+
+  if (json.mood) {
+    const emojiMap = {'Hype Train':'🚂','Hype':'🔥','Chill':'😌','Curious':'🤔','Bored':'😐','Frustrated':'😤'};
+    const emoji = Object.entries(emojiMap).find(([k]) => json.mood.label.includes(k))?.[1] || '😐';
+    document.getElementById('mood-val').textContent = json.mood.label;
+    document.getElementById('mood-fill').style.width = json.mood.positive + '%';
+    const mv = document.getElementById('mood-val');
+    mv.style.color = json.mood.positive>60 ? 'var(--green)' : json.mood.negative>40 ? 'var(--red)' : 'var(--amber)';
+    document.getElementById('mood-desc').textContent = json.mood.summary;
+    const bars = ['Hype','Positive','Negative'];
+    const cols = ['#7C4DFF','var(--green)','var(--red)'];
+    const vals = [json.mood.hype, json.mood.positive, json.mood.negative];
+    const barsHtml = `<div class="mbars">${bars.map((b,i)=>`<div class="mbar"><span>${b}</span><div class="mbar-track"><div class="mbar-fill" style="width:${Math.round(vals[i])}%;background:${cols[i]}"></div></div><span>${Math.round(vals[i])}%</span></div>`).join('')}</div>`;
+    addAIMsg(`${emoji} <strong>Chat mood: ${json.mood.label}</strong><br>${esc(json.mood.summary)}${barsHtml}`);
+    store.cards.unshift({ type:'mood', title:'Chat Mood', body:`${json.mood.label} — ${json.mood.summary}`, bars:{Hype:json.mood.hype,Positive:json.mood.positive,Negative:json.mood.negative}, time:tn() });
+    pushCoachCard(store.cards[0]);
+  }
+  if (json.do) {
+    addAIMsg(`✅ <strong>Do this now:</strong><br>${esc(json.do)}`, 'good');
+    const c = { type:'do', title:'Do this now', body:json.do, time:tn() };
+    store.cards.unshift(c); store.alert = c; pushCoachCard(c);
+    playAlert(660);
+  }
+  if (json.dont) {
+    addAIMsg(`⚠️ <strong>Avoid this:</strong><br>${esc(json.dont)}`, 'warn');
+    store.cards.unshift({ type:'dont', title:'Avoid', body:json.dont, time:tn() });
+    pushCoachCard(store.cards[0]);
+  }
+  if (json.hot_topic) {
+    addAIMsg(`🔥 Lots of people are talking about <strong>"${esc(json.hot_topic)}"</strong> right now. Great time to lean into it!`, 'info');
+    store.cards.unshift({ type:'hot', title:'Hot topic', body:json.hot_topic, time:tn() });
+    pushCoachCard(store.cards[0]);
+  }
+  if (json.engagement_alert) {
+    addAIMsg(`📉 <strong>Energy dipping a bit 📉</strong><br>${esc(json.engagement_alert)}<div class="msg-actions"><button class="msg-act-btn" onclick="quickAsk('hype')">🔥 Get hype tips</button><button class="msg-act-btn" onclick="quickAsk('poll')">🗳 Poll idea</button></div>`, 'warn');
+    const c = { type:'alert', title:'Engagement drop', body:json.engagement_alert, time:tn() };
+    store.cards.unshift(c); store.alert = c; pushCoachCard(c);
+    playAlert(440);
+  }
+  if (json.clip_moment) {
+    addAIMsg(`🎬 <strong>Clip worthy moment! 🎉</strong><br>${esc(json.clip_moment)}<br>Check the last 30 seconds!<div class="msg-actions"><button class="msg-act-btn" onclick="addClipEntry('${escAttr(json.clip_moment)}')">📌 Save clip timestamp</button></div>`, 'clip');
+    store.cards.unshift({ type:'clip', title:'Clip moment!', body:json.clip_moment, time:tn() });
+    pushCoachCard(store.cards[0]);
+    playAlert(880);
+  }
+  if (json.unanswered_question) {
+    addAIMsg(`Question found: <strong>"${esc(json.unanswered_question)}"</strong><div class="msg-actions"><button class="msg-act-btn" onclick="addToQAQueue('${escAttr(json.unanswered_question)}','chat');switchTab('qa',document.querySelectorAll('.tab')[2])">Add to Q&amp;A queue</button></div>`, 'info');
+  }
+  if (json.shoutout_queue?.length) {
+    const names = json.shoutout_queue.map(n=>`<strong>@${esc(n)}</strong>`).join(', ');
+    const first = json.shoutout_queue[0];
+    addAIMsg(`Shoutout queue: ${names}<div class="msg-actions"><button class="msg-act-btn" onclick="copyShoutout('${escAttr(first)}')">Copy shoutout for @${esc(first)}</button></div>`);
+    store.cards.unshift({ type:'shoutout', title:'Shoutout', body:json.shoutout_queue.join(', '), names:json.shoutout_queue, time:tn() });
+    pushCoachCard(store.cards[0]);
+  }
+
+  if (json.watchlist_alert) {
+    addAIMsg(`🔍 <strong>Watchlist alert:</strong><br>${esc(json.watchlist_alert)}`, 'warn');
+    store.cards.unshift({ type:'watchlist', title:'Watchlist alert', body:json.watchlist_alert, time:tn() });
+    pushCoachCard(store.cards[0]);
+    playAlert(528);
+  }
+
+  store.updatedAt = Date.now();
+  saveCoach(store);
+  if (Notification.permission==='granted' && store.alert) {
+    new Notification('StreamLine', { body: store.alert.body.replace(/<[^>]+>/g,'') });
+  }
+  logEvent({ type:'analysis', json, time: new Date().toISOString() });
+  toast('AI analysis complete');
+}
+
+// ══════════════════════════════════════════════
+// END STREAM / RECAP
+// ══════════════════════════════════════════════
+async function endStream() {
+  if (!confirm('End stream and generate a recap?')) return;
+  doDisconnect();
+  document.getElementById('modal-recap').classList.add('open');
+  document.getElementById('recap-box').textContent = 'Generating AI recap…';
+
+  const duration = streamStart ? formatDuration(Date.now() - streamStart.getTime()) : 'unknown';
+  const clips = sessionEvents.filter(e=>e.type==='clip');
+  const persona = document.getElementById('persona-input').value.trim();
+
+  const summary = `Stream duration: ${duration}
+Total messages: ${msgTotal}
+Unique chatters: ${uniqueChatters.size}
+Clip moments: ${clipCount}
+Top words: ${Object.entries(wordFreq).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([w,c])=>`${w}(${c})`).join(', ')}
+Clips: ${clips.map(c=>c.streamTime+' — '+c.note).join('; ')||'none'}
+${persona ? 'Streamer context: '+persona : ''}`;
+
+  const { cometKey, antKey } = getAIConfig();
+  if (!cometKey && !antKey) {
+    document.getElementById('recap-box').textContent = 'Add a CometAPI key for AI recap.\n\n' + summary;
+    return;
+  }
+  try {
+    const recap = await callAI(
+      `Generate a friendly, motivating end-of-stream recap for a streamer based on these stats. Be specific, positive, and actionable. Include highlights, what went well, and 2-3 tips for next time. Format as plain text paragraphs.\n\n${summary}`);
+    document.getElementById('recap-box').textContent = recap;
+  } catch(e) {
+    document.getElementById('recap-box').textContent = 'AI recap failed. Raw stats:\n\n' + summary;
+  }
+}
+function copyRecap() {
+  navigator.clipboard.writeText(document.getElementById('recap-box').textContent).catch(()=>{});
+  toast('Recap copied!');
+}
+function exportSession() {
+  const data = {
+    sessionStart: streamStart?.toISOString(),
+    duration: streamStart ? formatDuration(Date.now()-streamStart.getTime()) : null,
+    stats: { totalMessages:msgTotal, uniqueChatters:uniqueChatters.size, clipMoments:clipCount },
+    clips: sessionEvents.filter(e=>e.type==='clip'),
+    topWords: Object.entries(wordFreq).sort((a,b)=>b[1]-a[1]).slice(0,20),
+    goals,
+    qaQueue,
+    events: sessionEvents.slice(-200)
+  };
+  const blob = new Blob([JSON.stringify(data,null,2)], { type:'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href=url; a.download=`streamline-session-${new Date().toISOString().slice(0,10)}.json`; a.click();
+  URL.revokeObjectURL(url);
+  toast('Session exported!');
+}
+
+// ══════════════════════════════════════════════
+// SHOUTOUT
+// ══════════════════════════════════════════════
+function copyShoutout(name) {
+  navigator.clipboard.writeText(`Big shoutout to @${name}! Go show them some love — they're awesome! 🎉`).catch(()=>{});
+  toast('Shoutout copied for @' + name);
+}
+
+// ══════════════════════════════════════════════
+// AI PROVIDER — CometAPI (default) or Anthropic (explicit request)
+// CometAPI base: https://api.cometapi.com/v1/chat/completions  (OpenAI-compatible)
+// Default cheap model: gemini-3-flash
+// Anthropic fallback: claude-sonnet-4-6 via api.anthropic.com
+// ══════════════════════════════════════════════
+function getAIConfig() {
+  const cometKey = document.getElementById('comet-key').value.trim() || STREAMLINE_ENV.cometApiKey;
+  const antKey   = document.getElementById('ant-key').value.trim();
+  const useAnt   = document.getElementById('use-anthropic').checked;
+  return { cometKey, antKey, useAnt };
+}
+
+async function callAI(prompt, system = '', forceAnthropic = false) {
+  const { cometKey, antKey, useAnt } = getAIConfig();
+  const wantsAnthropic = forceAnthropic || useAnt;
+
+  // ── Anthropic path ──────────────────────────────────────────
+  if (wantsAnthropic) {
+    if (!antKey) throw new Error('Anthropic API key not set. Add it in the AI Coach section.');
+    const body = {
+      model: 'claude-sonnet-4-6',
+      max_tokens: 1000,
+      messages: [{ role: 'user', content: prompt }]
+    };
+    if (system) body.system = system;
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': antKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify(body)
+    });
+    const data = await res.json();
+    if (data.error) throw new Error('Anthropic: ' + data.error.message);
+    return data.content[0].text.trim();
+  }
+
+  const messages = [];
+  if (system) messages.push({ role: 'system', content: system });
+  messages.push({ role: 'user', content: prompt });
+
+  // ── CometAPI path (default) ─────────────────────────────────
+  const cometUrl = cometKey ? 'https://api.cometapi.com/v1/chat/completions' : '/api/ai/comet';
+  const headers = { 'Content-Type': 'application/json' };
+  if (cometKey) headers.Authorization = 'Bearer ' + cometKey;
+
+  const res = await fetch(cometUrl, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({
+      model: 'gemini-3-flash',
+      max_tokens: 1000,
+      messages
+    })
+  });
+  const data = await res.json();
+  if (data.error) throw new Error('CometAPI: ' + (data.error.message || JSON.stringify(data.error)));
+  return data.choices?.[0]?.message?.content?.trim() || '';
+}
+
+// keep callClaude as alias so existing call sites don't break
+async function callClaude(key, prompt, system = '') {
+  // key param ignored — uses stored keys from inputs
+  return callAI(prompt, system);
+}
+
+// ══════════════════════════════════════════════
+// COACH STORAGE (for coach.html sync)
+// ══════════════════════════════════════════════
+function loadCoach() {
+  try { return JSON.parse(localStorage.getItem('sl_coach') || '{"cards":[],"alert":null,"updatedAt":0}'); } catch { return {cards:[],alert:null,updatedAt:0}; }
+}
+function saveCoach(data) { try { localStorage.setItem('sl_coach', JSON.stringify(data)); } catch(e){} }
+function pushCoachCard(card) {
+  const s = loadCoach(); s.cards = s.cards || [];
+  s.cards.unshift(card);
+  if (s.cards.length > 60) s.cards.pop();
+  s.updatedAt = Date.now();
+  saveCoach(s);
+}
+
+// ══════════════════════════════════════════════
+// SESSION LOG
+// ══════════════════════════════════════════════
+function logEvent(ev) {
+  sessionEvents.push(ev);
+  if (sessionEvents.length > 2000) sessionEvents.shift();
+}
+
+// ══════════════════════════════════════════════
+// SOUND
+// ══════════════════════════════════════════════
+function playAlert(freq) {
+  if (!document.getElementById('tog-sound').checked) return;
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.frequency.value = freq;
+    osc.type = 'sine';
+    gain.gain.setValueAtTime(0, ctx.currentTime);
+    gain.gain.linearRampToValueAtTime(0.12, ctx.currentTime + 0.02);
+    gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.3);
+    osc.start(); osc.stop(ctx.currentTime + 0.35);
+  } catch(e) {}
+}
+
+// ══════════════════════════════════════════════
+// DONATIONS
+// ══════════════════════════════════════════════
+function logDonation(username, amountStr, message, isBits) {
+  // If called from the inject row:
+  if (username === undefined) {
+    username = document.getElementById('don-name').value.trim() || 'Anonymous';
+    amountStr = document.getElementById('don-amount').value.trim() || '$0';
+    message = document.getElementById('don-msg').value.trim();
+    isBits = /bits?/i.test(amountStr);
+    document.getElementById('don-name').value = '';
+    document.getElementById('don-amount').value = '';
+    document.getElementById('don-msg').value = '';
+  }
+  const amountNum = parseFloat(amountStr.replace(/[^0-9.]/g,'')) || 0;
+  const isBitsLocal = isBits || /bits?/i.test(amountStr);
+  const entry = {
+    id: ++donId,
+    username,
+    amount: amountStr,
+    amountNum,
+    isBits: isBitsLocal,
+    message: message || '',
+    time: tn(),
+    ts: Date.now(),
+    thanked: false
+  };
+  donations.unshift(entry);
+  if (donations.length > 200) donations.pop();
+  donTotalAmount += amountNum;
+  donBadgeCount++;
+  updateBadge('don-badge', donBadgeCount);
+  renderDonations();
+  updateDonStats();
+  saveAll();
+
+  // AI coach notification
+  const amountDisplay = isBitsLocal ? amountStr : '$' + amountNum.toFixed(2);
+  addAIMsg(
+    `💰 <strong>New donation from @${esc(username)}!</strong> ${esc(amountDisplay)}${message ? '<br>"' + esc(message) + '"' : ''}<div class="msg-actions"><button class="msg-act-btn" onclick="generateThankYou(${entry.id})">✨ Generate thank-you</button><button class="msg-act-btn" onclick="switchTab('donations',document.querySelectorAll('.tab')[3])">View all donations</button></div>`,
+    'good'
+  );
+  playAlert(880);
+  toast('💰 Donation from @' + username + '!');
+}
+
+function renderDonations() {
+  const feed = document.getElementById('donation-feed');
+  if (!donations.length) {
+    feed.innerHTML = '<div class="empty-state"><span class="empty-cup">💰</span>Donations will appear here.<br>Use the row below to log one manually.</div>';
+    return;
+  }
+  feed.innerHTML = donations.slice(0,50).map(d => `
+    <div class="donation-item${d.thanked ? ' thanked' : ''}" id="don-item-${d.id}">
+      <div class="donation-amount${d.isBits ? ' bits' : ''}">${esc(d.amount)}</div>
+      <div class="donation-content">
+        <div class="donation-user">@${esc(d.username)}</div>
+        ${d.message ? `<div class="donation-msg">"${esc(d.message)}"</div>` : ''}
+        <div class="donation-time">${d.time}</div>
+        <div class="donation-btns">
+          <button class="don-btn primary" onclick="generateThankYou(${d.id})">✨ Draft thank-you</button>
+          <button class="don-btn${d.thanked ? ' done' : ''}" onclick="markDonationThanked(${d.id})">${d.thanked ? '✓ Thanked' : 'Mark thanked'}</button>
+          <button class="don-btn" onclick="copyThankYouMsg('${escAttr(d.username)}','${escAttr(d.amount)}','${escAttr(d.message)}')">📋 Copy</button>
+        </div>
+        <div id="don-reply-${d.id}" style="margin-top:5px;font-size:11px;color:var(--text2);background:var(--bg);border-radius:6px;padding:0;display:none"></div>
+      </div>
+    </div>`).join('');
+}
+
+function updateDonStats() {
+  document.getElementById('don-total-count').textContent = donations.length;
+  const total = donations.reduce((s,d) => s + (d.amountNum||0), 0);
+  const hasBits = donations.some(d=>d.isBits);
+  document.getElementById('don-total-amount').textContent = hasBits ? '$' + total.toFixed(0) + '+' : '$' + total.toFixed(2);
+  document.getElementById('don-thanked-count').textContent = donations.filter(d=>d.thanked).length;
+}
+
+function markDonationThanked(id) {
+  const d = donations.find(x=>x.id===id);
+  if (!d) return;
+  d.thanked = true;
+  renderDonations();
+  updateDonStats();
+  saveAll();
+  toast('Marked as thanked!');
+}
+
+function copyThankYouMsg(username, amount, msg) {
+  const text = `Huge thank you to @${username} for the ${amount} donation!${msg ? ' They said: "' + msg + '"' : ''} You are absolutely amazing! 🙏💖`;
+  navigator.clipboard.writeText(text).catch(()=>{});
+  toast('Thank-you copied!');
+}
+
+async function generateThankYou(id) {
+  const d = donations.find(x=>x.id===id);
+  if (!d) return;
+  const { cometKey, antKey } = getAIConfig();
+  if (!cometKey && !antKey) { toast('Add CometAPI key first'); return; }
+  const replyEl = document.getElementById('don-reply-' + id);
+  if (!replyEl) return;
+  replyEl.style.display = 'block';
+  replyEl.innerHTML = '<span class="spin">•</span> Generating thank-you…';
+  const persona = document.getElementById('persona-input').value.trim();
+  try {
+    const text = await callAI(
+      `${persona ? 'Streamer context: ' + persona + '\n\n' : ''}Generate a warm, genuine, enthusiastic on-stream thank-you message for a viewer who donated.
+Donor: @${d.username}
+Amount: ${d.amount}${d.isBits ? ' bits' : ''}${d.message ? '\nTheir message: "' + d.message + '"' : ''}
+
+Write a natural thank-you the streamer can say aloud right now. Max 50 words. Personalize if they left a message. Be warm and genuine, not cringe. Plain text only.`
+    );
+    replyEl.innerHTML = `<div style="padding:6px 8px;line-height:1.55">${esc(text)}</div><div style="display:flex;gap:5px;padding:0 4px 4px"><button class="don-btn primary" onclick="navigator.clipboard.writeText(\`${text.replace(/`/g,"'")}\`).catch(()=>{});toast('Copied!');markDonationThanked(${id})">Copy & mark thanked</button><button class="don-btn" onclick="document.getElementById('don-reply-${id}').style.display='none'">✕</button></div>`;
+  } catch(e) {
+    replyEl.innerHTML = `<div style="padding:6px 8px;color:var(--red)">${esc(e.message)}</div>`;
+  }
+}
+
+// ══════════════════════════════════════════════
+// AI WATCHLIST
+// ══════════════════════════════════════════════
+function addWatchItem() {
+  const input = document.getElementById('watchlist-input');
+  const val = input.value.trim();
+  if (!val) return;
+  if (watchlistItems.length >= 20) { toast('Max 20 watchlist items'); return; }
+  if (!watchlistItems.includes(val)) {
+    watchlistItems.push(val);
+    input.value = '';
+    renderWatchlist();
+    saveAll();
+    toast('Added to watchlist!');
+  } else {
+    toast('Already in watchlist');
+  }
+}
+function removeWatchItem(idx) {
+  watchlistItems.splice(idx, 1);
+  renderWatchlist();
+  saveAll();
+}
+function clearWatchlist() {
+  watchlistItems = [];
+  renderWatchlist();
+  saveAll();
+  toast('Watchlist cleared');
+}
+function renderWatchlist() {
+  const el = document.getElementById('watchlist-items');
+  if (!el) return;
+  if (!watchlistItems.length) {
+    el.innerHTML = '<div style="font-size:11px;color:var(--text3)">No items yet.</div>';
+    return;
+  }
+  el.innerHTML = watchlistItems.map((item, i) => `
+    <div class="watchlist-tag">
+      <span>${esc(item)}</span>
+      <button onclick="removeWatchItem(${i})" title="Remove">✕</button>
+    </div>`).join('');
+}
+function getWatchlistPromptAddition() {
+  if (!watchlistItems.length) return '';
+  return `\n\nAI WATCHLIST — Pay special attention to these in chat: ${watchlistItems.map(w => '"' + w + '"').join(', ')}. If any of these appear or seem relevant, flag it immediately in your analysis.`;
+}
+
+// ══════════════════════════════════════════════
+// PANEL CUSTOMIZER
+// ══════════════════════════════════════════════
+const ADVANCED_PANELS = ['sc-mood','sc-goals','sc-hotwords','sc-rq','sc-clips','sc-persona','sc-watchlist','sc-aicoach'];
+
+function togglePanel(cardEl) {
+  const panelId = cardEl.dataset.panel;
+  const isOn = cardEl.classList.toggle('on');
+  panelVisibility[panelId] = isOn;
+  applyPanelVisibility();
+  saveAll();
+}
+
+function applyPanelVisibility() {
+  PANEL_IDS.forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const vis = panelVisibility[id] !== false;
+    if (!vis) {
+      el.style.display = 'none';
+    } else {
+      el.style.display = '';
+    }
+  });
+  // Sync settings panel cards
+  document.querySelectorAll('.panel-card').forEach(card => {
+    const id = card.dataset.panel;
+    if (id) card.classList.toggle('on', panelVisibility[id] !== false);
+  });
+}
+
+function setPanelPreset(mode) {
+  if (mode === 'minimal') {
+    PANEL_IDS.forEach(id => panelVisibility[id] = ['sc-livestats','sc-aicoach'].includes(id));
+  } else if (mode === 'standard') {
+    PANEL_IDS.forEach(id => panelVisibility[id] = ['sc-livestats','sc-mood','sc-clips','sc-persona','sc-watchlist','sc-aicoach'].includes(id));
+  } else {
+    PANEL_IDS.forEach(id => panelVisibility[id] = true);
+  }
+  applyPanelVisibility();
+  saveAll();
+  toast('Layout set to ' + mode + '!');
+}
+
+// ══════════════════════════════════════════════
+// PRESETS
+// ══════════════════════════════════════════════
+function captureCurrentConfig() {
+  return {
+    panels: { ...panelVisibility },
+    advanced: document.getElementById('toggle-advanced').checked,
+    watchlist: [...watchlistItems],
+    persona: document.getElementById('persona-input').value.trim(),
+    toggles: {
+      mood: document.getElementById('tog-mood').checked,
+      suggest: document.getElementById('tog-suggest').checked,
+      hot: document.getElementById('tog-hot').checked,
+      drop: document.getElementById('tog-drop').checked,
+      clip: document.getElementById('tog-clip').checked,
+      qa: document.getElementById('tog-qa').checked,
+      so: document.getElementById('tog-so').checked,
+    },
+    freq: document.getElementById('freq-sel').value,
+  };
+}
+
+function applyConfig(cfg) {
+  if (cfg.panels) {
+    panelVisibility = { ...panelVisibility, ...cfg.panels };
+    applyPanelVisibility();
+  }
+  if (cfg.advanced !== undefined) {
+    document.getElementById('toggle-advanced').checked = cfg.advanced;
+    toggleAdvancedMode();
+  }
+  if (cfg.watchlist) { watchlistItems = cfg.watchlist; renderWatchlist(); }
+  if (cfg.persona) document.getElementById('persona-input').value = cfg.persona;
+  if (cfg.toggles) {
+    ['mood','suggest','hot','drop','clip','qa','so'].forEach(k => {
+      const el = document.getElementById('tog-' + k);
+      if (el && cfg.toggles[k] !== undefined) el.checked = cfg.toggles[k];
+    });
+  }
+  if (cfg.freq) document.getElementById('freq-sel').value = cfg.freq;
+}
+
+function savePreset() {
+  const nameInput = document.getElementById('preset-name-input');
+  const name = nameInput.value.trim();
+  if (!name) { toast('Enter a preset name first'); return; }
+  const existing = presets.findIndex(p => p.name === name);
+  const preset = { name, config: captureCurrentConfig(), savedAt: new Date().toLocaleString() };
+  if (existing >= 0) {
+    presets[existing] = preset;
+    toast('Preset "' + name + '" updated!');
+  } else {
+    presets.unshift(preset);
+    toast('Preset "' + name + '" saved!');
+  }
+  nameInput.value = '';
+  renderPresets();
+  saveAll();
+}
+
+function loadPreset(idx) {
+  const p = presets[idx];
+  if (!p) return;
+  applyConfig(p.config);
+  saveAll();
+  toast('Loaded preset: "' + p.name + '"');
+}
+
+function deletePreset(idx) {
+  const name = presets[idx]?.name;
+  presets.splice(idx, 1);
+  renderPresets();
+  saveAll();
+  if (name) toast('Deleted preset: "' + name + '"');
+}
+
+function renderPresets() {
+  const el = document.getElementById('preset-list');
+  if (!el) return;
+  if (!presets.length) {
+    el.innerHTML = '<div style="font-size:11px;color:var(--text3);padding:4px 0">No presets yet. Customize your panels and save one!</div>';
+    return;
+  }
+  el.innerHTML = presets.map((p, i) => `
+    <div class="preset-row">
+      <div style="flex:1">
+        <div class="preset-name">${esc(p.name)}</div>
+        <div class="preset-desc">Saved ${esc(p.savedAt || '')}</div>
+      </div>
+      <div class="preset-btns">
+        <button class="preset-btn load" onclick="loadPreset(${i})">Load</button>
+        <button class="preset-btn del" onclick="deletePreset(${i})">✕</button>
+      </div>
+    </div>`).join('');
+}
+
+// ══════════════════════════════════════════════
+// MODALS
+// ══════════════════════════════════════════════
+function openCoachModal() {
+  Notification.requestPermission();
+  const url = window.location.href.replace(/[^/]*$/,'') + 'coach.html';
+  document.getElementById('coach-url').textContent = url;
+  document.getElementById('modal-coach').classList.add('open');
+}
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+function copyCoachUrl() { navigator.clipboard.writeText(document.getElementById('coach-url').textContent).catch(()=>{}); toast('URL copied!'); }
+function openCoachTab() { window.open('coach.html','_blank'); closeModal('modal-coach'); }
+
+// ══════════════════════════════════════════════
+// YOUTUBE CHAT ID FINDER
+// ══════════════════════════════════════════════
+async function fetchChatId() {
+  const videoId = document.getElementById('yt-video-id').value.trim();
+  const apiKey = document.getElementById('yt-apikey').value.trim() || STREAMLINE_ENV.youtubeApiKey;
+  const result = document.getElementById('chatid-result');
+  result.style.display = 'block';
+
+  if (!videoId) { result.innerHTML = '❌ Enter a Video ID first'; return; }
+
+  result.innerHTML = '<span style="color:var(--brown3)">⏳ Looking up…</span>';
+
+  // show debug panel
+  document.getElementById('yt-debug-panel').style.display = 'block';
+  clearDebug();
+  dbg('Fetching liveStreamingDetails for video: ' + videoId, 'info');
+
+  try {
+    const url = youtubeUrl('videos', { part:'liveStreamingDetails,snippet', id:videoId }, apiKey);
+    dbg(apiKey ? 'GET ' + url.replace(apiKey, apiKey.slice(0,8)+'…') : 'GET /api/youtube/videos using server .env', 'data');
+    const res = await fetch(url);
+    const data = await res.json();
+    dbg('HTTP ' + res.status, res.ok ? 'ok' : 'err');
+    dbg('Response: ' + JSON.stringify(data).slice(0,400), 'data');
+
+    if (data.error) {
+      dbg('Error: ' + data.error.message, 'err');
+      const code = data.error.code;
+      let fix = '';
+      if (code === 403) fix = '→ YouTube Data API v3 not enabled, or API key restricted. Check console.cloud.google.com';
+      if (code === 400) fix = '→ API key malformed';
+      if (code === 401) fix = '→ API key invalid or expired';
+      result.innerHTML = `❌ <strong>Error ${code}:</strong> ${esc(data.error.message)}${fix ? '<br><span style="color:var(--amber)">' + fix + '</span>' : ''}`;
+      if (fix) dbg(fix, 'warn');
+      return;
+    }
+
+    if (!data.items?.length) {
+      result.innerHTML = '❌ Video not found. Check the Video ID — it\'s the part after <code>?v=</code> in the YouTube URL.';
+      dbg('No video found for ID: ' + videoId, 'err');
+      return;
+    }
+
+    const video = data.items[0];
+    const title = video.snippet?.title || 'Unknown title';
+    const lsd = video.liveStreamingDetails;
+    dbg('Video found: ' + title, 'ok');
+
+    if (!lsd) {
+      result.innerHTML = `❌ This video (<em>${esc(title)}</em>) is not a live stream. Make sure you\'re using the Video ID from your live stream URL.`;
+      dbg('No liveStreamingDetails — not a live/scheduled stream', 'err');
+      return;
+    }
+
+    dbg('liveStreamingDetails: ' + JSON.stringify(lsd), 'data');
+    const chatId = lsd.activeLiveChatId;
+
+    if (!chatId) {
+      const scheduled = lsd.scheduledStartTime;
+      const ended = lsd.actualEndTime;
+      if (ended) {
+        result.innerHTML = `⚠️ Stream "<em>${esc(title)}</em>" has already ended. Live chat is only available while you are live.`;
+        dbg('Stream has ended — no active chat ID', 'warn');
+      } else if (scheduled) {
+        result.innerHTML = `⚠️ Stream "<em>${esc(title)}</em>" is scheduled but not live yet (starts ${new Date(scheduled).toLocaleString()}). Start the stream first, then get the Chat ID.`;
+        dbg('Stream is scheduled but not live yet', 'warn');
+      } else {
+        result.innerHTML = '⚠️ No active chat found. Make sure your stream is currently LIVE.';
+        dbg('No activeLiveChatId found', 'warn');
+      }
+      return;
+    }
+
+    // SUCCESS
+    dbg('Chat ID found: ' + chatId, 'ok');
+    result.innerHTML = `✅ <strong>Found it!</strong><br>Stream: <em>${esc(title)}</em><br><br>
+      <div style="background:var(--bg);border:1px solid var(--border2);border-radius:6px;padding:6px 9px;font-family:monospace;font-size:10px;word-break:break-all;color:var(--brown);margin:4px 0">${esc(chatId)}</div>
+      <button onclick="useChatId('${escAttr(chatId)}')" style="margin-top:6px;width:100%;padding:7px;border-radius:99px;background:var(--brown);border:none;color:#fff;font-size:11px;font-weight:600;cursor:pointer;font-family:var(--font)">✓ Use this Chat ID</button>`;
+
+  } catch(e) {
+    dbg('Network error: ' + e.message, 'err');
+    result.innerHTML = '❌ Network error: ' + esc(e.message) + '<br>Check your internet connection.';
+  }
+}
+
+function useChatId(id) {
+  document.getElementById('yt-chatid').value = id;
+  document.getElementById('chatid-result').innerHTML = '✅ Chat ID pasted above! Now click <strong>Connect to Chat</strong>.';
+  toast('Chat ID filled in!');
+}
+function toast(msg) {
+  const area = document.getElementById('toast-area');
+  if (!area) return;
+  const el = document.createElement('div');
+  el.className = 'toast';
+  el.textContent = msg;
+  area.appendChild(el);
+  setTimeout(() => el.remove(), 3000);
+}
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function escAttr(s){ return String(s).replace(/'/g,"\\'").replace(/"/g,'&quot;'); }
+function tn(){ return new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}); }
+function formatStreamTime(){
+  const s = streamSecs || Math.round((Date.now()-(streamStart||Date.now()))/1000);
+  const h=Math.floor(s/3600),m=Math.floor((s%3600)/60),sec=s%60;
+  return (h?h+':':'')+String(m).padStart(h?2:1,'0')+':'+String(sec).padStart(2,'0');
+}
+function formatDuration(ms){
+  const s=Math.floor(ms/1000),m=Math.floor(s/60),h=Math.floor(m/60);
+  return h?`${h}h ${m%60}m`:`${m}m ${s%60}s`;
+}
+</script>
+</body>
+</html>
